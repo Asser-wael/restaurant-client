@@ -78,9 +78,13 @@ export default function Layout() {
         {/* LOGOUT */}
         <motion.button
           onClick={async () => {
-            await dispatch(logoutUser()).unwrap();
-            window.location.reload();
-            navigate("/");
+            try {
+              await dispatch(logoutUser()).unwrap();
+              window.location.reload();
+              navigate("/");
+            } catch (error) {
+              console.log(error);
+            }
           }}
           className="flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition"
         >
