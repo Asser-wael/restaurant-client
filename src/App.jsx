@@ -16,7 +16,6 @@ import { socket } from "./services/socket";
 import { getAdminOrders, updateTracking } from "./features/orderSlice.js";
 import status from "./assets/status.mp3";
 
-// Helper: send browser notification safely (mobile-safe)
 function sendBrowserNotification(title, options) {
   try {
     if ("Notification" in window && Notification.permission === "granted") {
@@ -29,7 +28,6 @@ function sendBrowserNotification(title, options) {
 
 export default function App() {
   const dispatch = useDispatch();
-
   const { userData: user } = useSelector((state) => state.authSlice);
 
   useEffect(() => {
@@ -37,11 +35,30 @@ export default function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if ("Notification" in window) {
+    const setupPush = async () => {
+      if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+
       if (Notification.permission === "default") {
-        Notification.requestPermission();
+        await Notification.requestPermission();
       }
-    }
+
+      if (Notification.permission !== "granted") return;
+
+      const reg = await navigator.serviceWorker.register("/sw.js");
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: "YOUR_VAPID_PUBLIC_KEY_HERE",
+      });
+
+      await fetch("/save-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+    };
+
+    setupPush();
   }, []);
 
   useEffect(() => {
@@ -68,7 +85,6 @@ export default function App() {
       );
       localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-      // ✅ Mobile-safe notification
       sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
         icon: "/logo.png",
@@ -101,7 +117,6 @@ export default function App() {
       const handler = async (order) => {
         await dispatch(getAdminOrders());
 
-        // ✅ Mobile-safe notification
         sendBrowserNotification("🛒 New Order", {
           body: `Table ${order.tableNumber}`,
           icon: "/logo.png",
