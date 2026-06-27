@@ -1,0 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+:root {
+  /* Light */
+  --color-bg: #f8fafc;
+  --color-card: #ffffff;
+  --color-text: #0f172a;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #f97316;
+}
+
+.dark {
+  /* Dark */
+  --color-bg: #080c16;
+  --color-card: #0a1120;
+  --color-text: #f8fafc;
+  --color-muted: #94a3b8;
+  --color-border: #1e293b;
+  --color-accent: #d85a00;
+}
+
+body {
+  background-color: var(--color-bg);
+}
+.dark {
+  --color-bg: #080c16;
+}
+
+@theme {
+  --color-bg: var(--color-bg);
+  --color-card: var(--color-card);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+}
+
+/* ////////////////// */
+.logo {
+  font-family: "Lobster", cursive;
+}
