@@ -48,10 +48,10 @@ export default function App() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: "YOUR_VAPID_PUBLIC_KEY_HERE",
+        applicationServerKey: "BPOAdOoGoZfvfdPh0MzTm5NTavIS8qENQZyfn4kuvZvMi_mpcryA5JAyFv3oClvwTACDWerFLGUB4NQ-EK3cBG8",
       });
 
-      await fetch("/save-subscription", {
+      await fetch("https://restaurant-server-production-38cf.up.railway.app/save-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sub),
@@ -98,7 +98,7 @@ export default function App() {
       );
 
       const audio = new Audio(status);
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
 
       if (data.status === "completed" || data.status === "cancelled") {
         localStorage.removeItem("tableNumber");
