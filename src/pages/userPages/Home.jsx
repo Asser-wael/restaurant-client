@@ -112,17 +112,14 @@ export default function Home() {
                 className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-md p-5 flex items-center gap-4"
                 onClick={() => dispatch(setView(offer))}
               >
-                {/* Glow effect */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 rounded-full blur-2xl" />
 
-                {/* ICON / IMAGE */}
                 <div className="w-14 aspect-[1/4] h-14 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-lg shrink-0">
                   <img src={`${import.meta.env.VITE_API_URL}/uploads/${offer?.image}`} alt=""
                     className="w-full rounded-t-2xl h-full object-cover object-center scale-95 transition-transform duration-300 hover:scale-105"
                   />
                 </div>
 
-                {/* CONTENT */}
                 <div className="flex flex-col">
                   <h3 className="font-bold text-lg text-orange-500">
                     {offer.name || "Special Offer"}
@@ -132,7 +129,6 @@ export default function Home() {
                     {offer.description || "Get amazing discount on selected meals"}
                   </p>
 
-                  {/* optional badge */}
                   {offer.discount && (
                     <span className="mt-2 text-xs font-bold text-green-600">
                       Save {offer.discount}%
@@ -166,7 +162,7 @@ export default function Home() {
             whileHover={{
               scale: 1.03,
             }}
-            className="flex items-center gap-4 flex-1 min-w-[200px]"
+            className="flex items-center gap-4 flex-1 pr-2 min-w-[200px]"
           >
             <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-[var(--color-accent)] shrink-0">
               {item.icon}
