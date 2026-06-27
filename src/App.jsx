@@ -24,11 +24,13 @@ export default function App() {
     dispatch(getUser());
   }, [dispatch]);
 
-  useEffect(() => {
-    if ("Notification" in window) {
+useEffect(() => {
+  if ("Notification" in window) {
+    if (Notification.permission === "default") {
       Notification.requestPermission();
     }
-  }, []);
+  }
+}, []);
   useEffect(() => {
     const tableNumber = localStorage.getItem("tableNumber");
 
