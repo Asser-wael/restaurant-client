@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
-import Loading from "../components/Loading";
+import Loading from "../components/loading.jsx";
 import { getUser } from "../features/authSlice";
 
 const PublicRoute = ({ children }) => {
