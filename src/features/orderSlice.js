@@ -3,7 +3,6 @@ import api from "../api/api";
 import { setNotification } from "./notificationSlice";
 import { clearCart } from "./cartSlice";
 
-//  GET 
 export const getAdminOrders = createAsyncThunk(
     "order/getAdminOrders",
     async (_, { rejectWithValue }) => {
@@ -28,15 +27,12 @@ export const getOrderById = createAsyncThunk(
     }
 );
 
-//  ADD 
 export const checkOut = createAsyncThunk(
     "order/checkOut",
     async (formData, { rejectWithValue, dispatch }) => {
         try {
-            const cart = localStorage.getItem("cart")
-            const cartP = cart ? JSON.parse(cart) : []
-
-
+            const cart = localStorage.getItem("cart");
+            const cartP = cart ? JSON.parse(cart) : [];
 
             if (!cart || cart.length === 0) {
                 dispatch(
@@ -54,30 +50,35 @@ export const checkOut = createAsyncThunk(
             const oldOrders =
                 JSON.parse(localStorage.getItem("orderTracking")) || [];
 
-            oldOrders.push({
+            const newOrder = {
                 orderId: res.data.order._id,
                 cart,
                 status: "pending",
                 time: new Date(),
-            });
+            };
+
+            oldOrders.push(newOrder);
 
             localStorage.setItem(
                 "orderTracking",
                 JSON.stringify(oldOrders)
             );
+
             dispatch(
                 setNotification({
                     message: res.data.message,
                     type: res.data.type,
                 })
             );
-            dispatch(clearCart())
-            return res.data.order;
+            dispatch(clearCart());
+
+            return { order: res.data.order, newOrder };
         } catch (error) {
             return rejectWithValue(error.response?.data);
         }
     }
 );
+
 export const updateOrderStatus = createAsyncThunk(
     "order/updateOrderStatus",
     async ({ id, status }, { rejectWithValue, dispatch }) => {
@@ -90,7 +91,7 @@ export const updateOrderStatus = createAsyncThunk(
                     type: res.data.type,
                 })
             );
-            dispatch(clearCart())
+            dispatch(clearCart());
             return res.data.order;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -99,7 +100,6 @@ export const updateOrderStatus = createAsyncThunk(
 );
 
 
-//  SLICE 
 const orderSlice = createSlice({
     name: "orderSlice",
 
@@ -130,6 +130,21 @@ const orderSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
+            .addCase(checkOut.fulfilled, (state, action) => {
+                state.loading = false;
+                state.OrderTracking = [
+                    ...state.OrderTracking,
+                    action.payload.newOrder,
+                ];
+            })
+            .addCase(checkOut.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(checkOut.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
             .addCase(getAdminOrders.pending, (state) => {
                 state.loading = true;
             })
@@ -141,6 +156,7 @@ const orderSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+
             .addCase(getOrderById.pending, (state) => {
                 state.loading = true;
             })
@@ -152,8 +168,8 @@ const orderSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             });
-
     },
 });
+
 export const { updateTracking } = orderSlice.actions;
 export default orderSlice.reducer;
