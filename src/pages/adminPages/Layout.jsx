@@ -17,6 +17,7 @@ import ThemeToggle from "../../components/ToggleButton";
 
 export default function Layout() {
   const [open, setOpen] = useState(true);
+  const dispatch = useDispatch()
   const navigate = useNavigate();
   const location = useLocation();
   const menuItems = [
