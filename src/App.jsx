@@ -15,6 +15,18 @@ import { setNotification } from "./features/notificationSlice";
 import { socket } from "./services/socket";
 import { getAdminOrders, updateTracking } from "./features/orderSlice.js";
 import status from "./assets/status.mp3";
+
+// Helper: send browser notification safely (mobile-safe)
+function sendBrowserNotification(title, options) {
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, options);
+    }
+  } catch (e) {
+    console.warn("Notification not supported on this device:", e);
+  }
+}
+
 export default function App() {
   const dispatch = useDispatch();
 
@@ -24,20 +36,21 @@ export default function App() {
     dispatch(getUser());
   }, [dispatch]);
 
-useEffect(() => {
-  if ("Notification" in window) {
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
+  useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
     }
-  }
-}, []);
+  }, []);
+
   useEffect(() => {
     const tableNumber = localStorage.getItem("tableNumber");
-
     if (tableNumber) {
       socket.emit("join-table", tableNumber);
     }
   }, []);
+
   useEffect(() => {
     socket.on("order-status-updated", (data) => {
       dispatch(
@@ -46,20 +59,17 @@ useEffect(() => {
           status: data.status,
         })
       );
-      const tracking =
-        JSON.parse(localStorage.getItem("orderTracking")) || [];
 
+      const tracking = JSON.parse(localStorage.getItem("orderTracking")) || [];
       const updatedTracking = tracking.map((order) =>
         order.orderId === data.orderId
           ? { ...order, status: data.status }
           : order
       );
+      localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-      localStorage.setItem(
-        "orderTracking",
-        JSON.stringify(updatedTracking)
-      );
-      new Notification("🛒 Order Update", {
+      // ✅ Mobile-safe notification
+      sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
         icon: "/logo.png",
       });
@@ -72,7 +82,7 @@ useEffect(() => {
       );
 
       const audio = new Audio(status);
-      audio.play().catch(() => { });
+      audio.play().catch(() => {});
 
       if (data.status === "completed" || data.status === "cancelled") {
         localStorage.removeItem("tableNumber");
@@ -83,31 +93,32 @@ useEffect(() => {
       socket.off("order-status-updated");
     };
   }, [dispatch]);
+
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
       socket.emit("joinAdminRoom");
 
       const handler = async (order) => {
-        await dispatch(getAdminOrders())
-        if (Notification.permission === "granted") {
-          dispatch(
-            show({
-              message: `New Order Table ${order.tableNumber}`,
-            })
-          );
+        await dispatch(getAdminOrders());
 
-          new Notification("🛒 New Order", {
-            body: `Table ${order.tableNumber}`,
-            icon: "/logo.png",
-          });
+        // ✅ Mobile-safe notification
+        sendBrowserNotification("🛒 New Order", {
+          body: `Table ${order.tableNumber}`,
+          icon: "/logo.png",
+        });
 
-          dispatch(
-            setNotification({
-              message: `New Order Table ${order.tableNumber}`,
-              type: "order",
-            })
-          );
-        }
+        dispatch(
+          show({
+            message: `New Order Table ${order.tableNumber}`,
+          })
+        );
+
+        dispatch(
+          setNotification({
+            message: `New Order Table ${order.tableNumber}`,
+            type: "order",
+          })
+        );
       };
 
       socket.on("newOrder", handler);
@@ -118,7 +129,6 @@ useEffect(() => {
     }
   }, [dispatch]);
 
-  // ✅ SAFE: after hooks
   if (user && user.status === false) {
     return <WaitingAdmin />;
   }
