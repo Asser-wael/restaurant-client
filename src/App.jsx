@@ -118,7 +118,7 @@ export default function App() {
         await dispatch(getAdminOrders());
 
         sendBrowserNotification("🛒 New Order", {
-          body: `Table ${order.tableNumber}`,
+          body: `New Order Table ${order.tableNumber}`,
           icon: "/logo.png",
         });
 
