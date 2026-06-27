@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { getOrderById, updateOrderStatus } from "../../features/orderSlice";
-import Loading from "../../components/Loading";
+import Loading from "../../components/loading";
+
 import { IoClose } from "react-icons/io5";
 
 const STATUS_OPTIONS = ["pending", "accepted", "preparing", "completed", "cancelled"]

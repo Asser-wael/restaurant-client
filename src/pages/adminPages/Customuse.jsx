@@ -5,6 +5,7 @@ import { FaTrash } from "react-icons/fa";
 import { IoFastFoodOutline } from "react-icons/io5";
 
 import Loading from "../../components/loading";
+
 import { setNotification } from "../../features/notificationSlice";
 import { motion } from "framer-motion";
 

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { addRecipe, getAllRecipes } from "../../features/menuSlice";
 import { useNavigate } from "react-router-dom";
-import Loading from "../../components/Loading";
+import Loading from "../../components/loading";
 import { getAllCategories } from "../../features/customuseSlice";
 
 export default function Add() {
