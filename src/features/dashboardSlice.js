@@ -53,6 +53,8 @@ const dashboardSlice = createSlice({
                 state.todayData = action.payload.day;
                 state.monthData = action.payload.month;
                 state.yearData = action.payload.year;
+                console.log(action.payload.year);
+                
             })
             .addCase(adminDashboard.rejected, (state, action) => {
                 state.loading = false;
