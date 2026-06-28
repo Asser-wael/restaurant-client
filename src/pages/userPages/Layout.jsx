@@ -108,6 +108,7 @@ export default function Layout() {
                 className="
                   absolute
                   -top-2
+                  max-sm:-top-3
                   -right-2
                   min-w-5
                   h-5
@@ -119,6 +120,7 @@ export default function Layout() {
                   items-center
                   justify-center
                   px-1
+                  max-sm:scale-50
                 "
               >
                 {cart.length}
