@@ -120,7 +120,7 @@ export default function Layout() {
                   items-center
                   justify-center
                   px-1
-                  max-sm:scale-50
+                  max-sm:scale-75
                 "
               >
                 {cart.length}
