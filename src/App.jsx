@@ -37,6 +37,34 @@ const sendBrowserNotification = (title, options) => {
   }
 };
 
+// ✅ [FIX 1] دالة مشتركة بدل تكرار كود الـ Push Notification مرتين
+const setupPushNotification = async (endpoint, body) => {
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+
+  if (Notification.permission !== "granted") return;
+
+  const registration = await navigator.serviceWorker.register("/sw.js");
+
+  let subscription = await registration.pushManager.getSubscription();
+
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+    });
+  }
+
+  await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body(subscription)),
+  });
+};
+
 export default function App() {
   const dispatch = useDispatch();
 
@@ -57,46 +85,11 @@ export default function App() {
   useEffect(() => {
     if (user?.role !== "admin") return;
 
-    const setupPush = async () => {
-      if (
-        !("Notification" in window) ||
-        !("serviceWorker" in navigator)
-      ) {
-        return;
-      }
-
-      if (Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
-
-      if (Notification.permission !== "granted") return;
-
-      const registration = await navigator.serviceWorker.register("/sw.js");
-
-      let subscription =
-        await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey:
-            import.meta.env.VITE_VAPID_PUBLIC_KEY,
-        });
-      }
-
-      await fetch(
-        `${import.meta.env.VITE_API_URL}/save-admin-subscription`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(subscription),
-        }
-      );
-    };
-
-    setupPush();
+    // ✅ [FIX 1] استخدام الدالة المشتركة بدل تكرار الكود
+    setupPushNotification(
+      "/save-admin-subscription",
+      (subscription) => subscription
+    ).catch(console.error);
   }, [user]);
 
   /* =========================
@@ -106,53 +99,14 @@ export default function App() {
   useEffect(() => {
     if (user?.role === "admin") return;
 
-    const setupPush = async () => {
-      if (
-        !("Notification" in window) ||
-        !("serviceWorker" in navigator)
-      ) {
-        return;
-      }
+    const tableNumber = localStorage.getItem("tableNumber");
+    if (!tableNumber) return;
 
-      if (Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
-
-      if (Notification.permission !== "granted") return;
-
-      const registration = await navigator.serviceWorker.register("/sw.js");
-
-      let subscription =
-        await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey:
-            import.meta.env.VITE_VAPID_PUBLIC_KEY,
-        });
-      }
-
-      const tableNumber = localStorage.getItem("tableNumber");
-
-      if (!tableNumber) return;
-
-      await fetch(
-        `${import.meta.env.VITE_API_URL}/save-customer-subscription`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            tableNumber,
-            subscription,
-          }),
-        }
-      );
-    };
-
-    setupPush();
+    // ✅ [FIX 1] استخدام الدالة المشتركة بدل تكرار الكود
+    setupPushNotification(
+      "/save-customer-subscription",
+      (subscription) => ({ tableNumber, subscription })
+    ).catch(console.error);
   }, [user]);
 
   /* =========================
@@ -189,10 +143,7 @@ export default function App() {
           : order
       );
 
-      localStorage.setItem(
-        "orderTracking",
-        JSON.stringify(updatedTracking)
-      );
+      localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
       sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
@@ -208,31 +159,20 @@ export default function App() {
 
       playStatusSound();
 
-      if (
-        data.status === "completed" ||
-        data.status === "cancelled"
-      ) {
+      if (data.status === "completed" || data.status === "cancelled") {
         try {
-          const registration =
-            await navigator.serviceWorker.ready;
-
-          const subscription =
-            await registration.pushManager.getSubscription();
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
 
           if (subscription) {
             await fetch(
               `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  endpoint: subscription.endpoint,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ endpoint: subscription.endpoint }),
               }
             );
-            // await subscription.unsubscribe();
           }
         } catch (err) {
           console.error(err);
