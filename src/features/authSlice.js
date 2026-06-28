@@ -72,11 +72,25 @@ export const getUser = createAsyncThunk(
         }
     }
 )
-
+///////////////
 export const logoutUser = createAsyncThunk(
     "auth/logout",
     async (_, { rejectWithValue }) => {
         try {
+            // امسح الـ subscription من الـ backend قبل الـ logout
+            const reg = await navigator.serviceWorker.getRegistration();
+            if (reg) {
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                    await fetch(`${API_URL}/delete-admin-subscription`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ endpoint: sub.endpoint }),
+                    });
+                    await sub.unsubscribe();
+                }
+            }
+
             await axios.post(
                 `${API_URL}/logout`,
                 {},
@@ -90,6 +104,7 @@ export const logoutUser = createAsyncThunk(
         }
     }
 );
+//////////////////////
 const authSlice = createSlice({
     name: "authSlice",
     initialState: {

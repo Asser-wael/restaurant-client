@@ -1,42 +1,69 @@
+import { Suspense, useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
-import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppRoutes } from "./routes/AppRoutes.jsx";
-import './App.css'
-import { Suspense } from "react";
-import Loading from "./components/loading.jsx";
-import WaitingAdmin from "./components/waitingAdmin.jsx";
-import Toast from "./components/Toast.jsx";
-import { getUser } from "./features/authSlice.js";
-import SoundPlayer from "./components/SoundPlayer.jsx";
-import Popup from "./components/Popup.jsx";
-import { show } from "./features/soundNotificationSlice";
-import { setNotification } from "./features/notificationSlice";
-import { socket } from "./services/socket";
-import { getAdminOrders, updateTracking } from "./features/orderSlice.js";
+
+import "./App.css";
+
+import { AppRoutes } from "./routes/AppRoutes";
+
+import Loading from "./components/loading";
+import Popup from "./components/Popup";
+import SoundPlayer from "./components/SoundPlayer";
+import Toast from "./components/Toast";
+import WaitingAdmin from "./components/waitingAdmin";
+
 import status from "./assets/status.mp3";
 
-function sendBrowserNotification(title, options) {
+import { socket } from "./services/socket";
+
+import { getUser } from "./features/authSlice";
+import { setNotification } from "./features/notificationSlice";
+import { getAdminOrders, updateTracking } from "./features/orderSlice";
+import { show } from "./features/soundNotificationSlice";
+
+const playStatusSound = () => {
+  new Audio(status).play().catch(() => { });
+};
+
+const sendBrowserNotification = (title, options) => {
+  if (!("Notification" in window)) return;
+
   try {
-    if ("Notification" in window && Notification.permission === "granted") {
+    if (Notification.permission === "granted") {
       new Notification(title, options);
     }
-  } catch (e) {
-    console.warn("Notification not supported on this device:", e);
+  } catch (err) {
+    console.warn("Notification not supported:", err);
   }
-}
+};
 
 export default function App() {
   const dispatch = useDispatch();
+
   const { userData: user } = useSelector((state) => state.authSlice);
+
+  /* =========================
+        Get Current User
+  ========================== */
 
   useEffect(() => {
     dispatch(getUser());
   }, [dispatch]);
 
+  /* =========================
+      Admin Push Notification
+  ========================== */
+
   useEffect(() => {
+    if (user?.role !== "admin") return;
+
     const setupPush = async () => {
-      if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+      if (
+        !("Notification" in window) ||
+        !("serviceWorker" in navigator)
+      ) {
+        return;
+      }
 
       if (Notification.permission === "default") {
         await Notification.requestPermission();
@@ -44,32 +71,108 @@ export default function App() {
 
       if (Notification.permission !== "granted") return;
 
-      const reg = await navigator.serviceWorker.register("/sw.js");
+      const registration = await navigator.serviceWorker.register("/sw.js");
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: "BPOAdOoGoZfvfdPh0MzTm5NTavIS8qENQZyfn4kuvZvMi_mpcryA5JAyFv3oClvwTACDWerFLGUB4NQ-EK3cBG8",
-      });
+      let subscription =
+        await registration.pushManager.getSubscription();
 
-      await fetch("https://restaurant-server-production-38cf.up.railway.app/save-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub),
-      });
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey:
+            import.meta.env.VITE_VAPID_PUBLIC_KEY,
+        });
+      }
+
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/save-admin-subscription`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(subscription),
+        }
+      );
     };
 
     setupPush();
-  }, []);
+  }, [user]);
+
+  /* =========================
+      Customer Push Notification
+  ========================== */
+
+  useEffect(() => {
+    if (user?.role === "admin") return;
+
+    const setupPush = async () => {
+      if (
+        !("Notification" in window) ||
+        !("serviceWorker" in navigator)
+      ) {
+        return;
+      }
+
+      if (Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+
+      if (Notification.permission !== "granted") return;
+
+      const registration = await navigator.serviceWorker.register("/sw.js");
+
+      let subscription =
+        await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey:
+            import.meta.env.VITE_VAPID_PUBLIC_KEY,
+        });
+      }
+
+      const tableNumber = localStorage.getItem("tableNumber");
+
+      if (!tableNumber) return;
+
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/save-customer-subscription`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tableNumber,
+            subscription,
+          }),
+        }
+      );
+    };
+
+    setupPush();
+  }, [user]);
+
+  /* =========================
+      Join Customer Room
+  ========================== */
 
   useEffect(() => {
     const tableNumber = localStorage.getItem("tableNumber");
+
     if (tableNumber) {
       socket.emit("join-table", tableNumber);
     }
   }, []);
 
+  /* =========================
+      Customer Order Updates
+  ========================== */
+
   useEffect(() => {
-    socket.on("order-status-updated", (data) => {
+    const handleOrderStatus = async (data) => {
       dispatch(
         updateTracking({
           orderId: data.orderId,
@@ -77,13 +180,19 @@ export default function App() {
         })
       );
 
-      const tracking = JSON.parse(localStorage.getItem("orderTracking")) || [];
+      const tracking =
+        JSON.parse(localStorage.getItem("orderTracking")) || [];
+
       const updatedTracking = tracking.map((order) =>
         order.orderId === data.orderId
           ? { ...order, status: data.status }
           : order
       );
-      localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
+
+      localStorage.setItem(
+        "orderTracking",
+        JSON.stringify(updatedTracking)
+      );
 
       sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
@@ -97,52 +206,81 @@ export default function App() {
         })
       );
 
-      const audio = new Audio(status);
-      audio.play().catch(() => { });
+      playStatusSound();
 
-      if (data.status === "completed" || data.status === "cancelled") {
+      if (
+        data.status === "completed" ||
+        data.status === "cancelled"
+      ) {
+        try {
+          const registration =
+            await navigator.serviceWorker.ready;
+
+          const subscription =
+            await registration.pushManager.getSubscription();
+
+          if (subscription) {
+            await fetch(
+              `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  endpoint: subscription.endpoint,
+                }),
+              }
+            );
+            // await subscription.unsubscribe();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+
         localStorage.removeItem("tableNumber");
       }
-    });
+    };
+
+    socket.on("order-status-updated", handleOrderStatus);
 
     return () => {
-      socket.off("order-status-updated");
+      socket.off("order-status-updated", handleOrderStatus);
     };
   }, [dispatch]);
 
+  /* =========================
+        Admin New Orders
+  ========================== */
+
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      socket.emit("joinAdminRoom");
+    if (!localStorage.getItem("accessToken")) return;
 
-      const handler = async (order) => {
-        await dispatch(getAdminOrders());
+    socket.emit("joinAdminRoom");
 
-        sendBrowserNotification("🛒 New Order", {
-          body: `New Order Table ${order.tableNumber}`,
-          icon: "/logo.png",
-        });
+    const handleNewOrder = async (order) => {
+      await dispatch(getAdminOrders());
 
-        dispatch(
-          show({
-            message: `New Order Table ${order.tableNumber}`,
-          })
-        );
+      sendBrowserNotification("🛒 New Order", {
+        body: `New Order Table ${order.tableNumber}`,
+        icon: "/logo.png",
+      });
 
-        dispatch(
-          setNotification({
-            message: `New Order Table ${order.tableNumber}`,
-            type: "order",
-          })
-        );
-      };
+      dispatch(
+        show({
+          message: `New Order Table ${order.tableNumber}`,
+        })
+      );
+    };
 
-      socket.on("newOrder", handler);
+    socket.on("newOrder", handleNewOrder);
 
-      return () => {
-        socket.off("newOrder", handler);
-      };
-    }
+    return () => {
+      socket.off("newOrder", handleNewOrder);
+    };
   }, [dispatch]);
+
+  /* ========================= */
 
   if (user && user.status === false) {
     return <WaitingAdmin />;
@@ -153,6 +291,7 @@ export default function App() {
       <Toast />
       <SoundPlayer />
       <Popup />
+
       <Suspense fallback={<Loading />}>
         <RouterProvider router={AppRoutes} />
       </Suspense>
