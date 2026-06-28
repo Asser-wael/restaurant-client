@@ -30,142 +30,199 @@ export default function Layout() {
     (state) => state.cartSlice
   );
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
-      <nav className="sticky top-0 z-30 bg-[var(--color-card)] border-b border-[var(--color-border)] ">
-        <div className="mx-auto px-6 py-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+    className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
+  >
+    <nav className="sticky top-0 z-30 bg-[var(--color-card)] border-b border-[var(--color-border)]">
+      <div className="mx-auto h-16 px-4 md:px-6 flex items-center justify-between">
+
+        {/* Left */}
+        <div className="flex items-center gap-2 md:gap-4">
+
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setOpen(true)}
+            className="text-2xl lg:hidden"
+          >
+            <MdMenu />
+          </motion.button>
+
+          <h1
+            onClick={() => {
+              dispatch(clearView());
+              navigate("/");
+            }}
+            className="cursor-pointer flex items-center gap-2 text-2xl md:text-4xl font-bold text-orange-500 logo"
+          >
+            <GiChefToque className="text-3xl md:text-5xl" />
+            <span>Restaurant</span>
+          </h1>
+
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="hidden lg:flex items-center gap-2">
+          {menuItems.map((item) => (
             <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setOpen(true)}
-              className="text-3xl lg:hidden"
-            >
-              <MdMenu />
-            </motion.button>
-
-            <h1
-              className="cursor-pointer text-4xl font-bold -translate-y-3  text-orange-500 logo"
-              onClick={() => {
-                dispatch(clearView())
-                navigate("/")
-              }}
-            >
-              <GiChefToque size={40} className="text-orange-500 translate-x-13 translate-y-4" />
-              Restaurant
-            </h1>
-
-          </div>
-
-          <div className="hidden lg:flex items-center gap-2">
-            {menuItems.map((item) => (
-              <motion.button
-                key={item.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(item.to)}
-                className={`px-4 py-2 rounded-xl font-medium transition-all ${location.pathname === item.to
-                  ? "text-accent "
+              key={item.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(item.to)}
+              className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                location.pathname === item.to
+                  ? "text-accent"
                   : "hover:bg-[var(--color-bg)]"
-                  }`}
-              >
-                {item.title}
-              </motion.button>
-            ))}
-          </div>
+              }`}
+            >
+              {item.title}
+            </motion.button>
+          ))}
+        </div>
 
-          <div className="flex items-center gap-6">
-            {token && (
-              <RiAdminFill className=" text-accent cursor-pointer text-2xl" onClick={() => navigate("admin")} />
-            )}
-            <LuSearch
-              onClick={() => navigate("/search")}
-              className="text-xl cursor-pointer hover:text-orange-500 transition"
+        {/* Right */}
+        <div className="flex items-center gap-3 md:gap-5">
+
+          {token && (
+            <RiAdminFill
+              onClick={() => navigate("/admin")}
+              className="text-accent text-xl md:text-2xl cursor-pointer"
             />
+          )}
 
-            <span className=" absolute top-6 right-17 bg-accent rounded-2xl px-2 scale-75">
-              {cart.length}
-            </span>
+          <LuSearch
+            onClick={() => navigate("/search")}
+            className="text-xl cursor-pointer hover:text-orange-500 transition"
+          />
+
+          <div className="relative">
+
             <FiShoppingCart
               onClick={() => navigate("/cart")}
-              className={`text-xl cursor-pointer hover:text-orange-500 transition ${location.pathname === "/cart"
-                ? "text-[var(--color-accent)]"
-                : "text-[var(--color-text)]"
-                }`}
+              className={`text-xl md:text-2xl cursor-pointer hover:text-orange-500 transition ${
+                location.pathname === "/cart"
+                  ? "text-[var(--color-accent)]"
+                  : "text-[var(--color-text)]"
+              }`}
             />
 
-            <ToggleButton />
+            {cart.length > 0 && (
+              <span
+                className="
+                  absolute
+                  -top-2
+                  -right-2
+                  min-w-5
+                  h-5
+                  rounded-full
+                  bg-orange-500
+                  text-white
+                  text-[10px]
+                  flex
+                  items-center
+                  justify-center
+                  px-1
+                "
+              >
+                {cart.length}
+              </span>
+            )}
 
           </div>
+
+          <ToggleButton />
+
         </div>
-      </nav>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-            />
+      </div>
+    </nav>
+        <AnimatePresence>
+      {open && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
 
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.3 }}
-              className="fixed top-0 left-0 h-screen w-72 bg-[var(--color-card)] border-r border-[var(--color-border)] shadow-2xl z-50 lg:hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <h2
-                    className="cursor-pointer text-4xl font-bold text-orange-500 logo"
-                    onClick={() => navigate("/")}
-                  >
-                    Restaurant
-                  </h2>
+          {/* Sidebar */}
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-0 left-0 h-screen w-64 sm:w-72 bg-[var(--color-card)] border-r border-[var(--color-border)] shadow-2xl z-50 lg:hidden"
+          >
+            <div className="p-6 h-full flex flex-col">
 
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+
+                <h2
+                  onClick={() => {
+                    dispatch(clearView());
+                    navigate("/");
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer flex items-center gap-2 text-2xl font-bold text-orange-500 logo"
+                >
+                  <GiChefToque className="text-3xl" />
+                  Restaurant
+                </h2>
+
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-3xl"
+                >
+                  <MdClose />
+                </button>
+
+              </div>
+
+              {/* Menu */}
+              <div className="flex flex-col gap-2">
+
+                {menuItems.map((item) => (
                   <button
-                    onClick={() => setOpen(false)}
-                    className="text-3xl"
-                  >
-                    <MdClose />
-                  </button>
-                </div>
+                    key={item.id}
+                    onClick={() => {
+                      if (item.to === "/") {
+                        dispatch(clearView());
+                      }
 
-                <div className="flex flex-col gap-3">
-                  {menuItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (item.to == "/") {
-                          dispatch(clearView())
-                        }
-                        navigate(item.to);
-                        setOpen(false)
-                      }}
-                      className={`text-left px-4 py-3 rounded-lg transition-all ${location.pathname === item.to
+                      navigate(item.to);
+                      setOpen(false);
+                    }}
+                    className={`text-left px-4 py-3 rounded-xl transition-all ${
+                      location.pathname === item.to
                         ? "bg-orange-500 text-white"
                         : "hover:bg-[var(--color-bg)]"
-                        }`}
-                    >
-                      {item.title}
-                    </button>
-                  ))}
+                    }`}
+                  >
+                    {item.title}
+                  </button>
+                ))}
 
-                </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
-      <main>
-        <Outlet />
-      </main>
-    </motion.div>
-  );
-}
+              {/* Bottom */}
+              <div className="mt-auto pt-6 border-t border-[var(--color-border)] text-center text-sm text-gray-500">
+                Restaurant © 2026
+              </div>
+
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
+    <main className="min-h-[calc(100vh-64px)]">
+      <Outlet />
+    </main>
+  </motion.div>
+);}
