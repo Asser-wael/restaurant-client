@@ -172,11 +172,17 @@ export default function Dashboard() {
     state => state.dashboardSlice
   );
 
-  useEffect(() => {
-    socket.on("onlineUsers", setOnlineUsers);
-    return () => socket.off("onlineUsers");
-  }, []);
+useEffect(() => {
+  socket.emit("getOnlineUsers");
 
+  socket.on("onlineUsers", (count) => {
+    setOnlineUsers(count);
+  });
+
+  return () => {
+    socket.off("onlineUsers");
+  };
+}, []);
   useEffect(() => {
     dispatch(adminDashboard());
   }, [dispatch]);
