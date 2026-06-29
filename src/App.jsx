@@ -22,7 +22,7 @@ import { getAdminOrders, updateTracking } from "./features/orderSlice";
 import { show } from "./features/soundNotificationSlice";
 
 const playStatusSound = () => {
-  new Audio(status).play().catch(() => {});
+  new Audio(status).play().catch(() => { });
 };
 
 const sendBrowserNotification = (title, options) => {
@@ -101,20 +101,26 @@ export default function App() {
 
   // ✅ order-status-updated listener — مع حل مشكلة التكرار
   useEffect(() => {
+    // App.jsx — handleOrderStatus
     const handleOrderStatus = async (data) => {
       console.log("order-status-updated", data);
 
-      dispatch(updateTracking({ orderId: data.orderId, status: data.status }));
+      const tracking = JSON.parse(localStorage.getItem("orderTracking")) || [];
 
-      const tracking =
-        JSON.parse(localStorage.getItem("orderTracking")) || [];
+      // ✅ لو localStorage فاضي أو الأوردر مش موجود فيه، ignore الـ event
+      const orderExists = tracking.find((o) => o.orderId === data.orderId);
+      if (!orderExists) {
+        console.log("Order not found in tracking, ignoring event");
+        return;
+      }
+
+      dispatch(updateTracking({ orderId: data.orderId, status: data.status }));
 
       const updatedTracking = tracking.map((order) =>
         order.orderId === data.orderId
           ? { ...order, status: data.status }
           : order
       );
-
       localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
       sendBrowserNotification("🛒 Order Update", {
@@ -122,24 +128,18 @@ export default function App() {
         icon: "/logo.png",
       });
 
-      dispatch(
-        setNotification({
-          message: `Your order is now ${data.status}`,
-          type: "success",
-        })
-      );
+      dispatch(setNotification({
+        message: `Your order is now ${data.status}`,
+        type: "success",
+      }));
 
       playStatusSound();
 
       if (data.status === "completed" || data.status === "cancelled") {
         try {
-          const registration =
-            await navigator.serviceWorker.getRegistration();
-
+          const registration = await navigator.serviceWorker.getRegistration();
           if (registration) {
-            const subscription =
-              await registration.pushManager.getSubscription();
-
+            const subscription = await registration.pushManager.getSubscription();
             if (subscription) {
               await fetch(
                 `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
@@ -149,7 +149,6 @@ export default function App() {
                   body: JSON.stringify({ endpoint: subscription.endpoint }),
                 }
               );
-
               await subscription.unsubscribe();
             }
           }
