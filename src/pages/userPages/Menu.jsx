@@ -49,19 +49,19 @@ export default function Menu() {
 
   const isInWishlist = (productId) => wishlist.includes(productId);
 
-  const fillterdRecipes = recipes?.filter((order) => {
+  const filteredRecipes = recipes?.filter((recipe) => {
+    const text = search.toLowerCase();
+
     const matchesSearch =
-      order._id.toLowerCase().includes(search.toLowerCase()) ||
-      String(order.tableNumber).includes(search)
+      recipe.name?.toLowerCase().includes(text) ||
+      recipe.description?.toLowerCase().includes(text) ||
+      recipe.Category?.toLowerCase().includes(text);
 
-    const catSearch =
-      cat === "All"
-        ? recipes
-        : recipes.filter((e) => e.Category == cat);
+    const matchesCategory =
+      cat === "All" || recipe.Category === cat;
 
-    return matchesSearch && catSearch;
+    return matchesSearch && matchesCategory;
   });
-
   useEffect(() => {
     dispatch(getAllRecipes());
     dispatch(getAllCategories());
@@ -88,13 +88,13 @@ export default function Menu() {
         </p>
 
       </motion.div>
-        <input
-          type="text"
-          placeholder="Search by Order ID or Table..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] outline-none"
-        />
+      <input
+        type="text"
+        placeholder="Search by Order ID or Table..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-1 px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] outline-none"
+      />
 
       <div className="flex flex-wrap gap-3 ml-7 mb-8">
         <motion.div
@@ -148,7 +148,7 @@ export default function Menu() {
           ))}
 
         {!loadingRecipes &&
-          fillterdRecipes?.map((recipe, index) => (
+          filteredRecipes?.map((recipe, index) => (
             <motion.div
               key={recipe._id}
               initial={{ opacity: 0, y: 30 }}
