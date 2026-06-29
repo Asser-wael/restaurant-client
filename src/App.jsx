@@ -126,61 +126,92 @@ export default function App() {
   ========================== */
 
   useEffect(() => {
-    const handleOrderStatus = async (data) => {
-      dispatch(
-        updateTracking({
-          orderId: data.orderId,
-          status: data.status,
-        })
-      );
+  const handleOrderStatus = async (data) => {
+  console.log("1", data);
 
-      const tracking =
-        JSON.parse(localStorage.getItem("orderTracking")) || [];
+  dispatch(
+    updateTracking({
+      orderId: data.orderId,
+      status: data.status,
+    })
+  );
 
-      const updatedTracking = tracking.map((order) =>
-        order.orderId === data.orderId
-          ? { ...order, status: data.status }
-          : order
-      );
+  console.log("2");
 
-      localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
+  const tracking =
+    JSON.parse(localStorage.getItem("orderTracking")) || [];
 
-      sendBrowserNotification("🛒 Order Update", {
-        body: `Your order is now ${data.status}`,
-        icon: "/logo.png",
-      });
+  const updatedTracking = tracking.map((order) =>
+    order.orderId === data.orderId
+      ? { ...order, status: data.status }
+      : order
+  );
 
-      dispatch(
-        setNotification({
-          message: `Your order is now ${data.status}`,
-          type: "success",
-        })
-      );
+  localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-      playStatusSound();
+  console.log("3");
 
-      if (data.status === "completed" || data.status === "cancelled") {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
+  sendBrowserNotification("🛒 Order Update", {
+    body: `Your order is now ${data.status}`,
+    icon: "/logo.png",
+  });
 
-          if (subscription) {
-            await fetch(
-              `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ endpoint: subscription.endpoint }),
-              }
-            );
+  console.log("4");
+
+  dispatch(
+    setNotification({
+      message: `Your order is now ${data.status}`,
+      type: "success",
+    })
+  );
+
+  console.log("5");
+
+  playStatusSound();
+
+  console.log("6");
+
+  if (data.status === "completed" || data.status === "cancelled") {
+    console.log("7");
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      console.log("8");
+
+      const subscription =
+        await registration.pushManager.getSubscription();
+
+      console.log("9", subscription);
+
+      if (subscription) {
+        await fetch(
+          `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              endpoint: subscription.endpoint,
+            }),
           }
-        } catch (err) {
-          console.error(err);
-        }
+        );
 
-        localStorage.removeItem("tableNumber");
+        console.log("10");
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+
+    console.log("11");
+
+    localStorage.removeItem("tableNumber");
+    localStorage.removeItem("orderTracking");
+
+    console.log("12");
+  }
+};
+    
 
     socket.on("order-status-updated", handleOrderStatus);
 

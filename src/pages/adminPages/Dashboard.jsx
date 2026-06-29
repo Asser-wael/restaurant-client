@@ -15,7 +15,7 @@ import { adminDashboard, setMonth, setday, setyear } from "../../features/dashbo
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
-const fmt      = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
+const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
 const fmtMoney = (n) => (n == null ? "—" : "$" + Number(n).toLocaleString("en-US"));
 
 // ─────────────────────────────────────────────
@@ -70,9 +70,9 @@ function StatCard({ icon: Icon, label, value, accent, sub, loading, index }) {
 // ─────────────────────────────────────────────
 function PeriodToggle({ type, dispatch }) {
   const opts = [
-    { label: "Today", icon: FiClock,    action: setday,   key: "day"   },
+    { label: "Today", icon: FiClock, action: setday, key: "day" },
     { label: "Month", icon: FiCalendar, action: setMonth, key: "month" },
-    { label: "Year",  icon: FiActivity, action: setyear,  key: "year"  },
+    { label: "Year", icon: FiActivity, action: setyear, key: "year" },
   ];
 
   return (
@@ -84,8 +84,8 @@ function PeriodToggle({ type, dispatch }) {
           className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold
                       transition-all duration-200
                       ${type === key
-                        ? "bg-accent text-white shadow"
-                        : "text-muted hover:text-text"}`}
+              ? "bg-accent text-white shadow"
+              : "text-muted hover:text-text"}`}
         >
           <Icon size={13} />
           {label}
@@ -120,7 +120,7 @@ function ChartCard({ title, icon: Icon, iconColor, loading, empty, children }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5
                     transition-all duration-300 hover:shadow-lg"
-         style={{ animation: "fadeUp .5s .25s ease both" }}>
+      style={{ animation: "fadeUp .5s .25s ease both" }}>
 
       <div className="flex items-center gap-2 mb-5">
         <Icon size={17} color={iconColor} />
@@ -179,24 +179,24 @@ export default function Dashboard() {
   }, [dispatch]);
 
   // pick data by active period
-  const data      = type === "day" ? todayData : type === "month" ? monthData : yearData;
+  const data = type === "day" ? todayData : type === "month" ? monthData : yearData;
   const chartData = data?.chart || data?.sales || [];
 
   // stat cards config
   const cards = [
-    { icon: FiWifi,       label: "Online Now",  value: onlineUsers,                              accent: "#22c55e", sub: "Live users"     },
-    { icon: FiDollarSign, label: "Revenue",      value: fmtMoney(data?.revenue ?? data?.totalRevenue), accent: "#f97316", sub: type === "day" ? "Today" : type === "month" ? "This month" : "This year" },
-    { icon: FiShoppingBag,label: "Orders",       value: fmt(data?.orders ?? data?.totalOrders),  accent: "#6366f1", sub: "Total orders"   },
-    { icon: FiUsers,      label: "New Users",    value: fmt(data?.users ?? data?.newUsers),       accent: "#0ea5e9", sub: "Registered"     },
-    { icon: FiTrendingUp, label: "Conversion",   value: data?.conversion != null ? `${data.conversion}%` : "—", accent: "#ec4899", sub: "Visits → Orders" },
+    { icon: FiWifi, label: "Online Now", value: onlineUsers, accent: "#22c55e", sub: "Live users" },
+    { icon: FiDollarSign, label: "Revenue", value: fmtMoney(data?.revenue ?? data?.totalRevenue), accent: "#f97316", sub: type === "day" ? "Today" : type === "month" ? "This month" : "This year" },
+    { icon: FiShoppingBag, label: "Orders", value: fmt(data?.orders ?? data?.totalOrders), accent: "#6366f1", sub: "Total orders" },
+    { icon: FiUsers, label: "New Users", value: fmt(data?.users ?? data?.newUsers), accent: "#0ea5e9", sub: "Registered" },
+    { icon: FiTrendingUp, label: "Conversion", value: data?.conversion != null ? `${data.conversion}%` : "—", accent: "#ec4899", sub: "Visits → Orders" },
   ];
 
   // mini stats config
   const miniStats = [
-    { label: "Avg Order Value", value: fmtMoney(data?.avgOrderValue),                              color: "#f97316" },
-    { label: "Return Rate",     value: data?.returnRate != null ? `${data.returnRate}%` : "—",    color: "#ec4899" },
-    { label: "Total Products",  value: fmt(data?.products ?? data?.totalProducts),                 color: "#6366f1" },
-    { label: "Pending Orders",  value: fmt(data?.pendingOrders),                                   color: "#eab308" },
+    { label: "Avg Order Value", value: fmtMoney(data?.avgOrderValue), color: "#f97316" },
+    { label: "Return Rate", value: data?.returnRate != null ? `${data.returnRate}%` : "—", color: "#ec4899" },
+    { label: "Total Products", value: fmt(data?.products ?? data?.totalProducts), color: "#6366f1" },
+    { label: "Pending Orders", value: fmt(data?.pendingOrders), color: "#eab308" },
   ];
 
   return (
@@ -216,7 +216,7 @@ export default function Dashboard() {
 
         {/* ── Header ─────────────────────────────── */}
         <div className="mb-7 flex flex-wrap items-center justify-between gap-3"
-             style={{ animation: "fadeUp .4s ease both" }}>
+          style={{ animation: "fadeUp .4s ease both" }}>
           <div>
             <h1 className="text-xl font-extrabold text-text">Dashboard</h1>
             <p className="mt-0.5 text-xs text-muted">Welcome back, Admin 👋</p>
@@ -227,9 +227,9 @@ export default function Dashboard() {
         {/* ── Online badge ────────────────────────── */}
         <div className="mb-5 inline-flex items-center gap-2 rounded-full border
                         border-[#22c55e44] bg-[#22c55e18] px-3.5 py-1.5"
-             style={{ animation: "fadeUp .4s .1s ease both" }}>
+          style={{ animation: "fadeUp .4s .1s ease both" }}>
           <span className="h-2 w-2 rounded-full bg-[#22c55e]"
-                style={{ boxShadow:"0 0 0 3px #22c55e44", animation:"pulse 1.4s infinite" }} />
+            style={{ boxShadow: "0 0 0 3px #22c55e44", animation: "pulse 1.4s infinite" }} />
           <span className="text-xs font-semibold text-[#22c55e]">
             {onlineUsers} users online
           </span>
@@ -259,21 +259,21 @@ export default function Dashboard() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#f97316" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}   />
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="gOrd" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}   />
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="label" tick={{ fill:"var(--color-muted)", fontSize:11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill:"var(--color-muted)", fontSize:11 }} axisLine={false} tickLine={false} width={48} />
+                  <XAxis dataKey="label" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize:12, color:"var(--color-muted)" }} />
-                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={2.5} fill="url(#gRev)" dot={false} activeDot={{ r:5 }} />
-                  <Area type="monotone" dataKey="orders"  name="Orders"  stroke="#6366f1" strokeWidth={2.5} fill="url(#gOrd)" dot={false} activeDot={{ r:5 }} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: "var(--color-muted)" }} />
+                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={2.5} fill="url(#gRev)" dot={false} activeDot={{ r: 5 }} />
+                  <Area type="monotone" dataKey="orders" name="Orders" stroke="#6366f1" strokeWidth={2.5} fill="url(#gOrd)" dot={false} activeDot={{ r: 5 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -290,10 +290,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} barSize={12}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill:"var(--color-muted)", fontSize:11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill:"var(--color-muted)", fontSize:11 }} axisLine={false} tickLine={false} width={36} />
+                <XAxis dataKey="label" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="users" name="Users" fill="#0ea5e9" radius={[6,6,0,0]} />
+                <Bar dataKey="users" name="Users" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
