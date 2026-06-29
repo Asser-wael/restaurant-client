@@ -12,22 +12,16 @@ import {
 import { socket } from "../../services/socket";
 import { adminDashboard, setMonth, setday, setyear } from "../../features/dashboardSlice";
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
+
 const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
 const fmtMoney = (n) => (n == null ? "—" : "$" + Number(n).toLocaleString("en-US"));
 
-// ─────────────────────────────────────────────
-// Skeleton block
-// ─────────────────────────────────────────────
+
 const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse rounded-lg bg-border ${className}`} />
 );
 
-// ─────────────────────────────────────────────
-// Stat Card
-// ─────────────────────────────────────────────
+
 function StatCard({ icon: Icon, label, value, accent, sub, loading, index }) {
   return (
     <div
@@ -65,9 +59,7 @@ function StatCard({ icon: Icon, label, value, accent, sub, loading, index }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Period Toggle  (Today / Month / Year)
-// ─────────────────────────────────────────────
+
 function PeriodToggle({ type, dispatch }) {
   const opts = [
     { label: "Today", icon: FiClock, action: setday, key: "day" },
@@ -95,9 +87,7 @@ function PeriodToggle({ type, dispatch }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Chart Tooltip
-// ─────────────────────────────────────────────
+
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -113,9 +103,7 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Chart Card wrapper
-// ─────────────────────────────────────────────
+
 function ChartCard({ title, icon: Icon, iconColor, loading, empty, children }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5
@@ -138,9 +126,6 @@ function ChartCard({ title, icon: Icon, iconColor, loading, empty, children }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Mini stat (footer row)
-// ─────────────────────────────────────────────
 function MiniStat({ label, value, color, loading, index }) {
   return (
     <div
@@ -156,9 +141,6 @@ function MiniStat({ label, value, color, loading, index }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Dashboard
-// ─────────────────────────────────────────────
 export default function Dashboard() {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const dispatch = useDispatch();
@@ -167,22 +149,18 @@ export default function Dashboard() {
     (state) => state.dashboardSlice
   );
 
-  // socket: live online count
   useEffect(() => {
     socket.on("onlineUsers", setOnlineUsers);
     return () => socket.off("onlineUsers");
   }, []);
 
-  // fetch dashboard data once
   useEffect(() => {
     dispatch(adminDashboard());
   }, [dispatch]);
 
-  // pick data by active period
   const data = type === "day" ? todayData : type === "month" ? monthData : yearData;
-  const chartData = data?.chart || data?.sales || [];
+  const chartData = data
 
-  // stat cards config
   const cards = [
     { icon: FiWifi, label: "Online Now", value: onlineUsers, accent: "#22c55e", sub: "Live users" },
     { icon: FiDollarSign, label: "Revenue", value: fmtMoney(data?.revenue ?? data?.totalRevenue), accent: "#f97316", sub: type === "day" ? "Today" : type === "month" ? "This month" : "This year" },
@@ -191,7 +169,6 @@ export default function Dashboard() {
     { icon: FiTrendingUp, label: "Conversion", value: data?.conversion != null ? `${data.conversion}%` : "—", accent: "#ec4899", sub: "Visits → Orders" },
   ];
 
-  // mini stats config
   const miniStats = [
     { label: "Avg Order Value", value: fmtMoney(data?.avgOrderValue), color: "#f97316" },
     { label: "Return Rate", value: data?.returnRate != null ? `${data.returnRate}%` : "—", color: "#ec4899" },
@@ -201,7 +178,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* global keyframes */}
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(16px); }
@@ -214,7 +190,6 @@ export default function Dashboard() {
 
       <div className="min-h-screen bg-bg px-6 py-7 text-text">
 
-        {/* ── Header ─────────────────────────────── */}
         <div className="mb-7 flex flex-wrap items-center justify-between gap-3"
           style={{ animation: "fadeUp .4s ease both" }}>
           <div>
@@ -224,7 +199,6 @@ export default function Dashboard() {
           <PeriodToggle type={type} dispatch={dispatch} />
         </div>
 
-        {/* ── Online badge ────────────────────────── */}
         <div className="mb-5 inline-flex items-center gap-2 rounded-full border
                         border-[#22c55e44] bg-[#22c55e18] px-3.5 py-1.5"
           style={{ animation: "fadeUp .4s .1s ease both" }}>
@@ -235,7 +209,6 @@ export default function Dashboard() {
           </span>
         </div>
 
-        {/* ── Stat Cards ──────────────────────────── */}
         <div className="mb-7 grid gap-4
                         grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           {cards.map((c, i) => (
@@ -243,10 +216,8 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* ── Charts ──────────────────────────────── */}
         <div className="mb-7 grid gap-4 grid-cols-1 lg:grid-cols-3">
 
-          {/* Area chart  (spans 2 cols on lg) */}
           <div className="lg:col-span-2">
             <ChartCard
               title="Revenue & Orders"
@@ -279,7 +250,6 @@ export default function Dashboard() {
             </ChartCard>
           </div>
 
-          {/* Bar chart */}
           <ChartCard
             title="New Users"
             icon={FiUsers}
@@ -299,7 +269,6 @@ export default function Dashboard() {
           </ChartCard>
         </div>
 
-        {/* ── Mini Stats ──────────────────────────── */}
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
           {miniStats.map((s, i) => (
             <MiniStat key={s.label} {...s} loading={loading} index={i} />
