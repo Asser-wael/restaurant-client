@@ -13,6 +13,7 @@ import { CiHeart } from "react-icons/ci";
 export default function Menu() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
   const { loadingRecipes, recipes, cat } = useSelector(
     (state) => state.menuSlice
@@ -48,6 +49,18 @@ export default function Menu() {
 
   const isInWishlist = (productId) => wishlist.includes(productId);
 
+  const fillterdRecipes = orders?.filter((order) => {
+    const matchesSearch =
+      order._id.toLowerCase().includes(search.toLowerCase()) ||
+      String(order.tableNumber).includes(search)
+
+    const catSearch =
+      cat === "All"
+        ? recipes
+        : recipes.filter((e) => e.Category == cat);
+
+    return matchesSearch && catSearch;
+  });
   const fillterdRecipes =
     cat === "All"
       ? recipes
@@ -77,6 +90,14 @@ export default function Menu() {
         <p className="text-[var(--color-muted)] mt-2 max-w-md">
           Choose from a variety of delicious meals made just for you.
         </p>
+
+        <input
+          type="text"
+          placeholder="Search by Order ID or Table..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] outline-none"
+        />
       </motion.div>
 
       <div className="flex flex-wrap gap-3 ml-7 mb-8">

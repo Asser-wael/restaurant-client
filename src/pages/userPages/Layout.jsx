@@ -87,10 +87,10 @@ export default function Layout() {
             />
           )}
 
-          <LuSearch
+          {/* <LuSearch
             onClick={() => navigate("/search")}
             className="text-xl cursor-pointer hover:text-orange-500 transition"
-          />
+          /> */}
 
           <div className="relative">
 
