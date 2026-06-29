@@ -61,10 +61,6 @@ export default function Menu() {
 
     return matchesSearch && catSearch;
   });
-  const fillterdRecipes =
-    cat === "All"
-      ? recipes
-      : recipes.filter((e) => e.Category == cat);
 
   useEffect(() => {
     dispatch(getAllRecipes());
