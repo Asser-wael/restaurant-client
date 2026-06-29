@@ -37,7 +37,6 @@ const sendBrowserNotification = (title, options) => {
   }
 };
 
-// ✅ [FIX 1] دالة مشتركة بدل تكرار كود الـ Push Notification مرتين
 const setupPushNotification = async (endpoint, body) => {
   if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
@@ -70,31 +69,24 @@ export default function App() {
 
   const { userData: user } = useSelector((state) => state.authSlice);
 
-  /* =========================
-        Get Current User
-  ========================== */
+
+
 
   useEffect(() => {
     dispatch(getUser());
   }, [dispatch]);
 
-  /* =========================
-      Admin Push Notification
-  ========================== */
+
 
   useEffect(() => {
     if (user?.role !== "admin") return;
 
-    // ✅ [FIX 1] استخدام الدالة المشتركة بدل تكرار الكود
     setupPushNotification(
       "/save-admin-subscription",
       (subscription) => subscription
     ).catch(console.error);
   }, [user]);
 
-  /* =========================
-      Customer Push Notification
-  ========================== */
 
   useEffect(() => {
     if (user?.role === "admin") return;
@@ -109,9 +101,6 @@ export default function App() {
     ).catch(console.error);
   }, [user]);
 
-  /* =========================
-      Join Customer Room
-  ========================== */
 
   useEffect(() => {
     const tableNumber = localStorage.getItem("tableNumber");
@@ -121,9 +110,6 @@ export default function App() {
     }
   }, []);
 
-  /* =========================
-      Customer Order Updates
-  ========================== */
 
   useEffect(() => {
     const handleOrderStatus = async (data) => {
@@ -136,7 +122,6 @@ export default function App() {
         })
       );
 
-      console.log("2");
 
       const tracking =
         JSON.parse(localStorage.getItem("orderTracking")) || [];
@@ -149,14 +134,12 @@ export default function App() {
 
       localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-      console.log("3");
 
       sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
         icon: "/logo.png",
       });
 
-      console.log("4");
 
       dispatch(
         setNotification({
@@ -165,56 +148,61 @@ export default function App() {
         })
       );
 
-      console.log("5");
 
       playStatusSound();
 
-      console.log("6");
 
       if (data.status === "completed" || data.status === "cancelled") {
-        console.log("7");
-
         try {
-          console.log("before getRegistration");
-
           const registration = await navigator.serviceWorker.getRegistration();
 
-          console.log("after getRegistration", registration);
-
-          if (!registration) {
-            console.log("No Service Worker");
-          } else {
-            console.log("before getSubscription");
-
+          if (registration) {
             const subscription =
               await registration.pushManager.getSubscription();
 
-            console.log("subscription", subscription);
+            if (subscription) {
+              await fetch(
+                `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    endpoint: subscription.endpoint,
+                  }),
+                }
+              );
+
+              await subscription.unsubscribe();
+            }
           }
         } catch (err) {
-          console.error("ERROR >>>", err);
+          console.error(err);
+        } finally {
+          localStorage.removeItem("tableNumber");
+          localStorage.removeItem("orderTracking");
+
+          console.log(
+            "tableNumber:",
+            localStorage.getItem("tableNumber")
+          );
+          console.log(
+            "orderTracking:",
+            localStorage.getItem("orderTracking")
+          );
         }
-
-        console.log("before remove");
-
-        localStorage.removeItem("tableNumber");
-        localStorage.removeItem("orderTracking");
-
-        console.log("after remove");
-      }
-    };
+      }}
 
 
-    socket.on("order-status-updated", handleOrderStatus);
+      socket.on("order-status-updated", handleOrderStatus);
 
-    return () => {
-      socket.off("order-status-updated", handleOrderStatus);
-    };
-  }, [dispatch]);
+      return () => {
+        socket.off("order-status-updated", handleOrderStatus);
+      };
+    }, [dispatch]);
 
-  /* =========================
-        Admin New Orders
-  ========================== */
+
 
   useEffect(() => {
     if (!localStorage.getItem("accessToken")) return;
@@ -243,7 +231,6 @@ export default function App() {
     };
   }, [dispatch]);
 
-  /* ========================= */
 
   if (user && user.status === false) {
     return <WaitingAdmin />;
