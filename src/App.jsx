@@ -94,7 +94,7 @@ export default function App() {
     const tableNumber = localStorage.getItem("tableNumber");
     if (!tableNumber) return;
 
-    // ✅ [FIX 1] استخدام الدالة المشتركة بدل تكرار الكود
+
     setupPushNotification(
       "/save-customer-subscription",
       (subscription) => ({ tableNumber, subscription })
