@@ -49,7 +49,7 @@ export default function Menu() {
 
   const isInWishlist = (productId) => wishlist.includes(productId);
 
-  const fillterdRecipes = orders?.filter((order) => {
+  const fillterdRecipes = recipes?.filter((order) => {
     const matchesSearch =
       order._id.toLowerCase().includes(search.toLowerCase()) ||
       String(order.tableNumber).includes(search)
