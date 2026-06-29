@@ -22,12 +22,11 @@ import { getAdminOrders, updateTracking } from "./features/orderSlice";
 import { show } from "./features/soundNotificationSlice";
 
 const playStatusSound = () => {
-  new Audio(status).play().catch(() => { });
+  new Audio(status).play().catch(() => {});
 };
 
 const sendBrowserNotification = (title, options) => {
   if (!("Notification" in window)) return;
-
   try {
     if (Notification.permission === "granted") {
       new Notification(title, options);
@@ -66,17 +65,11 @@ const setupPushNotification = async (endpoint, body) => {
 
 export default function App() {
   const dispatch = useDispatch();
-
   const { userData: user } = useSelector((state) => state.authSlice);
-
-
-
 
   useEffect(() => {
     dispatch(getUser());
   }, [dispatch]);
-
-
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -87,13 +80,11 @@ export default function App() {
     ).catch(console.error);
   }, [user]);
 
-
   useEffect(() => {
     if (user?.role === "admin") return;
 
     const tableNumber = localStorage.getItem("tableNumber");
     if (!tableNumber) return;
-
 
     setupPushNotification(
       "/save-customer-subscription",
@@ -101,27 +92,19 @@ export default function App() {
     ).catch(console.error);
   }, [user]);
 
-
   useEffect(() => {
     const tableNumber = localStorage.getItem("tableNumber");
-
     if (tableNumber) {
       socket.emit("join-table", tableNumber);
     }
   }, []);
 
-
+  // ✅ order-status-updated listener — مع حل مشكلة التكرار
   useEffect(() => {
     const handleOrderStatus = async (data) => {
-      console.log("1", data);
+      console.log("order-status-updated", data);
 
-      dispatch(
-        updateTracking({
-          orderId: data.orderId,
-          status: data.status,
-        })
-      );
-
+      dispatch(updateTracking({ orderId: data.orderId, status: data.status }));
 
       const tracking =
         JSON.parse(localStorage.getItem("orderTracking")) || [];
@@ -134,12 +117,10 @@ export default function App() {
 
       localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-
       sendBrowserNotification("🛒 Order Update", {
         body: `Your order is now ${data.status}`,
         icon: "/logo.png",
       });
-
 
       dispatch(
         setNotification({
@@ -148,13 +129,12 @@ export default function App() {
         })
       );
 
-
       playStatusSound();
-
 
       if (data.status === "completed" || data.status === "cancelled") {
         try {
-          const registration = await navigator.serviceWorker.getRegistration();
+          const registration =
+            await navigator.serviceWorker.getRegistration();
 
           if (registration) {
             const subscription =
@@ -165,12 +145,8 @@ export default function App() {
                 `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
                 {
                   method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    endpoint: subscription.endpoint,
-                  }),
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ endpoint: subscription.endpoint }),
                 }
               );
 
@@ -182,28 +158,20 @@ export default function App() {
         } finally {
           localStorage.removeItem("tableNumber");
           localStorage.removeItem("orderTracking");
-
-          console.log(
-            "tableNumber:",
-            localStorage.getItem("tableNumber")
-          );
-          console.log(
-            "orderTracking:",
-            localStorage.getItem("orderTracking")
-          );
         }
-      }}
+      }
+    };
 
+    // ✅ امسح القديم الأول عشان الـ listener متتكررش
+    socket.off("order-status-updated");
+    socket.on("order-status-updated", handleOrderStatus);
 
-      socket.on("order-status-updated", handleOrderStatus);
+    return () => {
+      socket.off("order-status-updated", handleOrderStatus);
+    };
+  }, [dispatch]);
 
-      return () => {
-        socket.off("order-status-updated", handleOrderStatus);
-      };
-    }, [dispatch]);
-
-
-
+  // ✅ newOrder listener — مع حل مشكلة التكرار
   useEffect(() => {
     if (!localStorage.getItem("accessToken")) return;
 
@@ -224,13 +192,14 @@ export default function App() {
       );
     };
 
+    // ✅ امسح القديم الأول
+    socket.off("newOrder");
     socket.on("newOrder", handleNewOrder);
 
     return () => {
       socket.off("newOrder", handleNewOrder);
     };
   }, [dispatch]);
-
 
   if (user && user.status === false) {
     return <WaitingAdmin />;
