@@ -70,7 +70,6 @@ export default function Menu() {
   return (
     <div className="px-4 py-6 max-w-screen-2xl mx-auto">
 
-      {/* ── Header ── */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -97,7 +96,6 @@ export default function Menu() {
         </div>
       </motion.div>
 
-      {/* ── Categories ── */}
       <div className="flex flex-wrap gap-2 mb-6">
         <motion.button
           whileHover={{ scale: 1.04 }}
@@ -142,14 +140,12 @@ export default function Menu() {
         }
       </div>
 
-      {/* ── Grid ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
       >
-        {/* Skeletons */}
         {loadingRecipes &&
           Array.from({ length: 8 }).map((_, i) => (
             <div
@@ -196,9 +192,7 @@ export default function Menu() {
                 />
               </div>
 
-              {/* Body */}
               <div className="flex flex-col justify-between p-3 lg:p-4 flex-1 min-w-0">
-                {/* Top row */}
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm lg:text-base font-semibold text-[var(--color-text)] leading-snug line-clamp-1">
@@ -223,7 +217,6 @@ export default function Menu() {
                     {recipe.description}
                   </p>
 
-                  {/* Category badge — mobile only */}
                   <span className="lg:hidden inline-block mt-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[11px] font-medium">
                     {recipe.Category}
                   </span>
