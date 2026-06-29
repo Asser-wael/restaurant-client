@@ -93,7 +93,7 @@ export default function Menu() {
         placeholder="Search...."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="flex-1 px-4 py-2 rounded-lg my-3 border border-[var(--color-border)] bg-[var(--color-card)] outline-none"
+        className="flex-1 px-4 py-2 rounded-lg mt-3 border border-[var(--color-border)] bg-[var(--color-card)] outline-none"
       />
       </motion.div>
 
