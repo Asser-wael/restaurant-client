@@ -154,7 +154,6 @@ export default function Menu() {
             />
           ))}
 
-        {/* Cards */}
         {!loadingRecipes &&
           filteredRecipes?.map((recipe, index) => (
             <motion.div
@@ -176,7 +175,6 @@ export default function Menu() {
                 transition-all duration-200
               "
             >
-              {/* Image */}
               <div
                 className="
                   w-[120px] h-[120px] shrink-0 self-center m-2 rounded-xl overflow-hidden
