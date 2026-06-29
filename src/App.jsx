@@ -126,92 +126,82 @@ export default function App() {
   ========================== */
 
   useEffect(() => {
-  const handleOrderStatus = async (data) => {
-  console.log("1", data);
+    const handleOrderStatus = async (data) => {
+      console.log("1", data);
 
-  dispatch(
-    updateTracking({
-      orderId: data.orderId,
-      status: data.status,
-    })
-  );
+      dispatch(
+        updateTracking({
+          orderId: data.orderId,
+          status: data.status,
+        })
+      );
 
-  console.log("2");
+      console.log("2");
 
-  const tracking =
-    JSON.parse(localStorage.getItem("orderTracking")) || [];
+      const tracking =
+        JSON.parse(localStorage.getItem("orderTracking")) || [];
 
-  const updatedTracking = tracking.map((order) =>
-    order.orderId === data.orderId
-      ? { ...order, status: data.status }
-      : order
-  );
+      const updatedTracking = tracking.map((order) =>
+        order.orderId === data.orderId
+          ? { ...order, status: data.status }
+          : order
+      );
 
-  localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
+      localStorage.setItem("orderTracking", JSON.stringify(updatedTracking));
 
-  console.log("3");
+      console.log("3");
 
-  sendBrowserNotification("🛒 Order Update", {
-    body: `Your order is now ${data.status}`,
-    icon: "/logo.png",
-  });
+      sendBrowserNotification("🛒 Order Update", {
+        body: `Your order is now ${data.status}`,
+        icon: "/logo.png",
+      });
 
-  console.log("4");
+      console.log("4");
 
-  dispatch(
-    setNotification({
-      message: `Your order is now ${data.status}`,
-      type: "success",
-    })
-  );
+      dispatch(
+        setNotification({
+          message: `Your order is now ${data.status}`,
+          type: "success",
+        })
+      );
 
-  console.log("5");
+      console.log("5");
 
-  playStatusSound();
+      playStatusSound();
 
-  console.log("6");
+      console.log("6");
 
-  if (data.status === "completed" || data.status === "cancelled") {
-    console.log("7");
+      if (data.status === "completed" || data.status === "cancelled") {
+        console.log("7");
 
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      console.log("8");
+        const registration = await navigator.serviceWorker.getRegistration();
 
-      const subscription =
-        await registration.pushManager.getSubscription();
+        if (!registration) {
+          console.log("No Service Worker");
+        } else {
+          const subscription = await registration.pushManager.getSubscription();
 
-      console.log("9", subscription);
-
-      if (subscription) {
-        await fetch(
-          `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              endpoint: subscription.endpoint,
-            }),
+          if (subscription) {
+            await fetch(
+              `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  endpoint: subscription.endpoint,
+                }),
+              }
+            );
           }
-        );
+        }
 
-        console.log("10");
+        localStorage.removeItem("tableNumber");
+        localStorage.removeItem("orderTracking");
       }
-    } catch (err) {
-      console.error(err);
-    }
+    };
 
-    console.log("11");
-
-    localStorage.removeItem("tableNumber");
-    localStorage.removeItem("orderTracking");
-
-    console.log("12");
-  }
-};
-    
 
     socket.on("order-status-updated", handleOrderStatus);
 
