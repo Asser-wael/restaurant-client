@@ -174,31 +174,33 @@ export default function App() {
       if (data.status === "completed" || data.status === "cancelled") {
         console.log("7");
 
-        const registration = await navigator.serviceWorker.getRegistration();
+        try {
+          console.log("before getRegistration");
 
-        if (!registration) {
-          console.log("No Service Worker");
-        } else {
-          const subscription = await registration.pushManager.getSubscription();
+          const registration = await navigator.serviceWorker.getRegistration();
 
-          if (subscription) {
-            await fetch(
-              `${import.meta.env.VITE_API_URL}/delete-customer-subscription`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  endpoint: subscription.endpoint,
-                }),
-              }
-            );
+          console.log("after getRegistration", registration);
+
+          if (!registration) {
+            console.log("No Service Worker");
+          } else {
+            console.log("before getSubscription");
+
+            const subscription =
+              await registration.pushManager.getSubscription();
+
+            console.log("subscription", subscription);
           }
+        } catch (err) {
+          console.error("ERROR >>>", err);
         }
+
+        console.log("before remove");
 
         localStorage.removeItem("tableNumber");
         localStorage.removeItem("orderTracking");
+
+        console.log("after remove");
       }
     };
 
