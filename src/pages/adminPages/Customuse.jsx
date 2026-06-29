@@ -187,7 +187,6 @@ export default function Customuse() {
 
         <div className="flex-1 min-w-0">
 
-          {/* Tab bar */}
           <div className="flex gap-1 mb-5 bg-[var(--color-card)] border border-[var(--color-border)] p-1 rounded-xl w-fit">
             {tabs.map((t) => (
               <button
@@ -247,7 +246,6 @@ export default function Customuse() {
             </motion.div>
           )}
 
-          {/* ── POPULAR TAB ── */}
           {activeTab === "popular" && (
             <motion.div {...fadeUp}>
               {popularList?.length === 0 ? (

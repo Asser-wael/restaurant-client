@@ -203,7 +203,9 @@ export default function App() {
   if (user && user.status === false) {
     return <WaitingAdmin />;
   }
-
+  useEffect(() => {
+    Notification.requestPermission();
+  }, []);
   return (
     <>
       <Toast />
