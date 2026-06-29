@@ -159,7 +159,13 @@ export default function Dashboard() {
   }, [dispatch]);
 
   const data = type === "day" ? todayData : type === "month" ? monthData : yearData;
-  const chartData = data
+  const chartData = [
+    {
+      label: type === "day" ? "Today" : type === "month" ? "This Month" : "This Year",
+      revenue: data?.revenue || 0,
+      orders: data?.orders || 0,
+    },
+  ];
 
   const cards = [
     { icon: FiWifi, label: "Online Now", value: onlineUsers, accent: "#22c55e", sub: "Live users" },
