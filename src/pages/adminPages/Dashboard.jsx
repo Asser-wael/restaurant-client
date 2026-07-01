@@ -209,7 +209,6 @@ export default function Dashboard() {
       sub: type === "day" ? "Today" : type === "month" ? "This month" : "This year",
     },
     { icon: FiShoppingBag, label: "Orders", color: "#6366f1", value: fmt(data?.orders), sub: "Total orders" },
-    { icon: FiUsers, label: "New Users", color: "#0ea5e9", value: fmt(data?.users), sub: "Registered" },
     { icon: FiTrendingUp, label: "Avg Order", color: "#ec4899", value: fmtMoney(data?.avgOrderValue), sub: "Per transaction" },
   ];
 
@@ -265,7 +264,7 @@ export default function Dashboard() {
             { label: "Orders", color: "#6366f1" },
           ]}
         >
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
