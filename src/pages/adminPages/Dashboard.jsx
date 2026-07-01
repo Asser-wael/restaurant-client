@@ -246,7 +246,7 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {cards.map((c, i) => (
           <Card key={c.label} {...c} loading={loading} index={i} />
         ))}
@@ -293,25 +293,6 @@ export default function Dashboard() {
               <Area yAxisId="rev" type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={2} fill="url(#gRev)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
               <Area yAxisId="ord" type="monotone" dataKey="orders" name="Orders" stroke="#6366f1" strokeWidth={2} fill="url(#gOrd)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
             </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="New Users"
-          icon={FiUsers}
-          iconColor="#0ea5e9"
-          loading={loading}
-          empty={!hasChart}
-          legend={[{ label: "Registrations", color: "#0ea5e9" }]}
-        >
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barSize={10}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-              <XAxis dataKey="_label" tick={{ fill: "var(--color-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "var(--color-muted)", fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="users" name="Users" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-            </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
