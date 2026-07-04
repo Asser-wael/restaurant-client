@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/api";
 import { setNotification } from "./notificationSlice";
+import { clearView } from "./usersSlice";
 
 //  GET 
 export const getAllRecipes = createAsyncThunk(
@@ -68,6 +69,20 @@ export const removeRecipe = createAsyncThunk(
                 );
             } catch (err) {
                 console.error("setNotification dispatch error:", err);
+            }
+
+            // ✅ لو المنتج اللي اتمسح ده هو نفسه المتخزن في الـ view (localStorage)
+            // امسح الـ view عشان مايفضلش يشاور على منتج مش موجود
+            try {
+                const storedView = localStorage.getItem("view");
+                if (storedView) {
+                    const parsedView = JSON.parse(storedView);
+                    if (parsedView?._id === id) {
+                        dispatch(clearView());
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to check/clear stale view after delete:", err);
             }
 
             return id;
