@@ -8,14 +8,17 @@ export const getAllRecipes = createAsyncThunk(
     async (_, { rejectWithValue, dispatch }) => {
         try {
             const res = await api.get("/getAllRecipes");
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
 
-
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return res.data.data;
         } catch (err) {
@@ -31,12 +34,16 @@ export const addRecipe = createAsyncThunk(
         try {
             const res = await api.post("/addRecipe", formData);
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return res.data.data;
         } catch (error) {
@@ -52,12 +59,16 @@ export const removeRecipe = createAsyncThunk(
         try {
             const res = await api.delete(`/removeRecipe/${id}`);
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return id;
         } catch (error) {
@@ -86,15 +97,19 @@ export const editRecipe = createAsyncThunk(
     "menu/editRecipe",
     async ({ formData, id }, { rejectWithValue, dispatch }) => {
         try {
-            
+
             const res = await api.put(`/editRecipe/${id}`, formData);
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return res.data.data;
         } catch (error) {
@@ -109,7 +124,7 @@ const menuSlice = createSlice({
 
     initialState: {
         recipes: [],
-        cat:"All",
+        cat: "All",
         selectedRecipe: null,
         selectedRecipeToEdit: null,
 
@@ -124,23 +139,34 @@ const menuSlice = createSlice({
 
     reducers: {
         clearRecipe: (state, action) => {
-            state.selectedRecipe = null;
+            try {
+                state.selectedRecipe = null;
+            } catch (err) {
+                console.error("clearRecipe reducer error:", err);
+            }
         },
         clearIdToEdit: (state, action) => {
-            state.selectedRecipeToEdit = null;
+            try {
+                state.selectedRecipeToEdit = null;
+            } catch (err) {
+                console.error("clearIdToEdit reducer error:", err);
+            }
         },
         setIdToEdit: (state, action) => {
-            state.selectedRecipeToEdit = action.payload;
-            
+            try {
+                state.selectedRecipeToEdit = action.payload;
+            } catch (err) {
+                console.error("setIdToEdit reducer error:", err);
+            }
         },
         setCat: (state, action) => {
-            state.cat = action.payload;
-            
+            try {
+                state.cat = action.payload;
+            } catch (err) {
+                console.error("setCat reducer error:", err);
+            }
         },
-
-
     },
-
 
     extraReducers: (builder) => {
         builder
@@ -150,8 +176,12 @@ const menuSlice = createSlice({
                 state.loadingRecipes = true;
             })
             .addCase(getAllRecipes.fulfilled, (state, action) => {
-                state.loadingRecipes = false;
-                state.recipes = action.payload;
+                try {
+                    state.loadingRecipes = false;
+                    state.recipes = action.payload;
+                } catch (err) {
+                    console.error("getAllRecipes.fulfilled reducer error:", err);
+                }
             })
             .addCase(getAllRecipes.rejected, (state, action) => {
                 state.loadingRecipes = false;
@@ -163,8 +193,12 @@ const menuSlice = createSlice({
                 state.loadingAdd = true;
             })
             .addCase(addRecipe.fulfilled, (state, action) => {
-                state.loadingAdd = false;
-                state.recipes.push(action.payload);
+                try {
+                    state.loadingAdd = false;
+                    state.recipes.push(action.payload);
+                } catch (err) {
+                    console.error("addRecipe.fulfilled reducer error:", err);
+                }
             })
             .addCase(addRecipe.rejected, (state, action) => {
                 state.loadingAdd = false;
@@ -176,11 +210,15 @@ const menuSlice = createSlice({
                 state.loadingDelete = true;
             })
             .addCase(removeRecipe.fulfilled, (state, action) => {
-                state.loadingDelete = false;
+                try {
+                    state.loadingDelete = false;
 
-                state.recipes = state.recipes.filter(
-                    (recipe) => recipe._id !== action.payload
-                );
+                    state.recipes = state.recipes.filter(
+                        (recipe) => recipe._id !== action.payload
+                    );
+                } catch (err) {
+                    console.error("removeRecipe.fulfilled reducer error:", err);
+                }
             })
             .addCase(removeRecipe.rejected, (state, action) => {
                 state.loadingDelete = false;
@@ -192,33 +230,39 @@ const menuSlice = createSlice({
                 state.loadingView = true;
             })
             .addCase(viewRecipe.fulfilled, (state, action) => {
-                state.loadingView = false;
-                state.selectedRecipe = action.payload;
-                console.log(state.selectedRecipe);
-
+                try {
+                    state.loadingView = false;
+                    state.selectedRecipe = action.payload;
+                    console.log(state.selectedRecipe);
+                } catch (err) {
+                    console.error("viewRecipe.fulfilled reducer error:", err);
+                }
             })
             .addCase(viewRecipe.rejected, (state, action) => {
                 state.loadingView = false;
                 state.error = action.payload;
-
             })
             // EDIT 
             .addCase(editRecipe.pending, (state) => {
                 state.loadingEdit = true;
             })
             .addCase(editRecipe.fulfilled, (state, action) => {
-                state.loadingEdit = false;
+                try {
+                    state.loadingEdit = false;
 
-                const index = state.recipes.findIndex(
-                    (recipe) => recipe._id === action.payload._id
-                );
+                    const index = state.recipes.findIndex(
+                        (recipe) => recipe._id === action.payload._id
+                    );
 
-                if (index !== -1) {
-                    state.recipes[index] = action.payload;
-                }
+                    if (index !== -1) {
+                        state.recipes[index] = action.payload;
+                    }
 
-                if (state.selectedRecipe?._id === action.payload._id) {
-                    state.selectedRecipe = action.payload;
+                    if (state.selectedRecipe?._id === action.payload._id) {
+                        state.selectedRecipe = action.payload;
+                    }
+                } catch (err) {
+                    console.error("editRecipe.fulfilled reducer error:", err);
                 }
             })
             .addCase(editRecipe.rejected, (state, action) => {
@@ -228,5 +272,5 @@ const menuSlice = createSlice({
     },
 });
 
-export const {  clearRecipe , clearIdToEdit, setIdToEdit,setCat} = menuSlice.actions;
+export const { clearRecipe, clearIdToEdit, setIdToEdit, setCat } = menuSlice.actions;
 export default menuSlice.reducer;
