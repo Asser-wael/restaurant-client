@@ -1,211 +1,291 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/api";
 import { setNotification } from "./notificationSlice";
+import { clearView } from "./usersSlice";
 
-export const getAllUsers = createAsyncThunk(
-  "users/getAllUsers",
-  async (_, { rejectWithValue, dispatch }) => {
-    try {
-      const res = await api.get("/admin/users");
-      console.log(res.data);
-
-      try {
-        dispatch(
-          setNotification({
-            message: res.data.message,
-            type: res.data.type,
-          })
-        );
-      } catch (err) {
-        console.error("setNotification dispatch error:", err);
-      }
-
-      return res.data.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
-
-export const deleteUser = createAsyncThunk(
-  "users/deleteUser",
-  async (id, { rejectWithValue }) => {
-    try {
-      await api.delete(`/admin/deleteUser/${id}`);
-      return id;
-    } catch (err) {
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
-
-export const changeStatus = createAsyncThunk(
-  "users/changeStatus",
-  async ({ id, status }, { rejectWithValue, dispatch }) => {
-    try {
-      const res = await api.put(`/admin/changeStatus/${id}`, {
-        status,
-      });
-
-      try {
-        dispatch(
-          setNotification({
-            message: res.data.message,
-            type: res.data.type,
-          })
-        );
-      } catch (err) {
-        console.error("setNotification dispatch error:", err);
-      }
-
-      return {
-        id: res.data.id,
-        status,
-      };
-    } catch (err) {
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
-
-// ✅ فحص هل الـ view صالح (لازم يكون فيه _id على الأقل عشان نقدر نطابقه مع المنتجات)
-const isViewValid = (view) => {
-  if (!view) return false;
-  if (!view._id) return false;
-  return true;
-};
-
-// ✅ قراءة الـ view الابتدائي من localStorage بأمان
-// لو الكائن مش صالح (فاضي أو من غير _id)، بنلغيه (نرجّعه null ونمسحه من localStorage)
-const getInitialView = () => {
-  try {
-    const stored = localStorage.getItem("view");
-    if (!stored) return null;
-
-    const parsed = JSON.parse(stored);
-
-    if (!isViewValid(parsed)) {
-      try {
-        localStorage.removeItem("view");
-      } catch (err) {
-        console.error("Failed to remove invalid view from localStorage:", err);
-      }
-      return null;
-    }
-
-    return parsed;
-  } catch (err) {
-    console.error("Failed to parse initial view:", err);
-    return null;
-  }
-};
-
-const usersSlice = createSlice({
-  name: "usersSlice",
-  initialState: {
-    usersData: [],
-    view: getInitialView(),
-    loadingUsers: false,
-    loadingDelete: false,
-    loadingStatus: false,
-    error: null,
-  },
-
-  reducers: {
-    setView: (state, action) => {
-      try {
-        const payload = action.payload;
-
-        // ✅ لو الفيو من غير _id (بيانات ناقصة)، الغِ الفيو بدل ما تحفظه
-        if (!isViewValid(payload)) {
-          console.warn("Invalid view (missing _id), clearing view instead:", payload);
-          state.view = null;
-          try {
-            localStorage.removeItem("view");
-          } catch (err) {
-            console.error("Failed to remove view from localStorage:", err);
-          }
-          return;
-        }
-
-        state.view = payload;
-
+//  GET 
+export const getAllRecipes = createAsyncThunk(
+    "menu/getAllRecipes",
+    async (_, { rejectWithValue, dispatch }) => {
         try {
-          localStorage.setItem(
-            "view",
-            JSON.stringify(payload)
-          );
+            const res = await api.get("/getAllRecipes");
+
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            return res.data.data;
         } catch (err) {
-          console.error("Failed to save view to localStorage:", err);
+            return rejectWithValue(err.response?.data);
         }
-      } catch (err) {
-        console.error("setView reducer error:", err);
-      }
+    }
+);
+
+//  ADD 
+export const addRecipe = createAsyncThunk(
+    "menu/addRecipe",
+    async (formData, { rejectWithValue, dispatch }) => {
+        try {
+            const res = await api.post("/addRecipe", formData);
+
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            return res.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+//  DELETE 
+export const removeRecipe = createAsyncThunk(
+    "menu/removeRecipe",
+    async (id, { rejectWithValue, dispatch }) => {
+        try {
+            const res = await api.delete(`/removeRecipe/${id}`);
+
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            // ✅ لو المنتج اللي اتمسح ده هو نفسه المتخزن في الـ view (localStorage)
+            // امسح الـ view عشان مايفضلش يشاور على منتج مش موجود
+            try {
+                const storedView = localStorage.getItem("view");
+                if (storedView) {
+                    const parsedView = JSON.parse(storedView);
+                    if (parsedView?._id === id) {
+                        dispatch(clearView());
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to check/clear stale view after delete:", err);
+            }
+
+            return id;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+// VIEW 
+export const viewRecipe = createAsyncThunk(
+    "menu/viewRecipe",
+    async (id, { rejectWithValue }) => {
+        try {
+            const res = await api.get(`/viewRecipe/${id}`);
+
+            return res.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+
+    }
+);
+
+//  EDIT 
+export const editRecipe = createAsyncThunk(
+    "menu/editRecipe",
+    async ({ formData, id }, { rejectWithValue, dispatch }) => {
+        try {
+
+            const res = await api.put(`/editRecipe/${id}`, formData);
+
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            return res.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+//  SLICE 
+const menuSlice = createSlice({
+    name: "menuSlice",
+
+    initialState: {
+        recipes: [],
+        cat: "All",
+        selectedRecipe: null,
+        selectedRecipeToEdit: null,
+
+        loadingRecipes: false,
+        loadingAdd: false,
+        loadingDelete: false,
+        loadingView: false,
+        loadingEdit: false,
+
+        error: null,
     },
 
-    clearView: (state) => {
-      try {
-        state.view = null;
-        localStorage.removeItem("view");
-      } catch (err) {
-        console.error("clearView reducer error:", err);
-      }
+    reducers: {
+        clearRecipe: (state, action) => {
+            try {
+                state.selectedRecipe = null;
+            } catch (err) {
+                console.error("clearRecipe reducer error:", err);
+            }
+        },
+        clearIdToEdit: (state, action) => {
+            try {
+                state.selectedRecipeToEdit = null;
+            } catch (err) {
+                console.error("clearIdToEdit reducer error:", err);
+            }
+        },
+        setIdToEdit: (state, action) => {
+            try {
+                state.selectedRecipeToEdit = action.payload;
+            } catch (err) {
+                console.error("setIdToEdit reducer error:", err);
+            }
+        },
+        setCat: (state, action) => {
+            try {
+                state.cat = action.payload;
+            } catch (err) {
+                console.error("setCat reducer error:", err);
+            }
+        },
     },
-  },
 
-  extraReducers: (builder) => {
-    builder
-      // GET USERS
-      .addCase(getAllUsers.pending, (state) => {
-        state.loadingUsers = true;
-      })
-      .addCase(getAllUsers.fulfilled, (state, action) => {
-        state.loadingUsers = false;
-        state.usersData = action.payload;
-      })
-      .addCase(getAllUsers.rejected, (state, action) => {
-        state.loadingUsers = false;
-        state.error = action.payload;
-      })
-      // changeStatus
-      .addCase(changeStatus.pending, (state) => {
-        state.loadingStatus = true;
-      })
-      .addCase(changeStatus.fulfilled, (state, action) => {
-        try {
-          state.loadingStatus = false;
+    extraReducers: (builder) => {
+        builder
 
-          const user = state.usersData.find(
-            (u) => u._id === action.payload.id
-          );
+            //  GET 
+            .addCase(getAllRecipes.pending, (state) => {
+                state.loadingRecipes = true;
+            })
+            .addCase(getAllRecipes.fulfilled, (state, action) => {
+                try {
+                    state.loadingRecipes = false;
+                    state.recipes = action.payload;
+                } catch (err) {
+                    console.error("getAllRecipes.fulfilled reducer error:", err);
+                }
+            })
+            .addCase(getAllRecipes.rejected, (state, action) => {
+                state.loadingRecipes = false;
+                state.error = action.payload;
+            })
 
-          if (user) {
-            user.status = action.payload.status;
-          }
-        } catch (err) {
-          console.error("changeStatus.fulfilled reducer error:", err);
-        }
-      })
-      // DELETE
-      .addCase(deleteUser.pending, (state) => {
-        state.loadingDelete = true;
-      })
-      .addCase(deleteUser.fulfilled, (state, action) => {
-        try {
-          state.loadingDelete = false;
-          state.usersData = state.usersData.filter(
-            (user) => user._id !== action.payload
-          );
-        } catch (err) {
-          console.error("deleteUser.fulfilled reducer error:", err);
-        }
-      })
-      .addCase(deleteUser.rejected, (state, action) => {
-        state.loadingDelete = false;
-        state.error = action.payload;
-      });
-  },
+            //  ADD 
+            .addCase(addRecipe.pending, (state) => {
+                state.loadingAdd = true;
+            })
+            .addCase(addRecipe.fulfilled, (state, action) => {
+                try {
+                    state.loadingAdd = false;
+                    state.recipes.push(action.payload);
+                } catch (err) {
+                    console.error("addRecipe.fulfilled reducer error:", err);
+                }
+            })
+            .addCase(addRecipe.rejected, (state, action) => {
+                state.loadingAdd = false;
+                state.error = action.payload;
+            })
+
+            //  DELETE
+            .addCase(removeRecipe.pending, (state) => {
+                state.loadingDelete = true;
+            })
+            .addCase(removeRecipe.fulfilled, (state, action) => {
+                try {
+                    state.loadingDelete = false;
+
+                    state.recipes = state.recipes.filter(
+                        (recipe) => recipe._id !== action.payload
+                    );
+                } catch (err) {
+                    console.error("removeRecipe.fulfilled reducer error:", err);
+                }
+            })
+            .addCase(removeRecipe.rejected, (state, action) => {
+                state.loadingDelete = false;
+                state.error = action.payload;
+            })
+
+            //  VIEW 
+            .addCase(viewRecipe.pending, (state) => {
+                state.loadingView = true;
+            })
+            .addCase(viewRecipe.fulfilled, (state, action) => {
+                try {
+                    state.loadingView = false;
+                    state.selectedRecipe = action.payload;
+                    console.log(state.selectedRecipe);
+                } catch (err) {
+                    console.error("viewRecipe.fulfilled reducer error:", err);
+                }
+            })
+            .addCase(viewRecipe.rejected, (state, action) => {
+                state.loadingView = false;
+                state.error = action.payload;
+            })
+            // EDIT 
+            .addCase(editRecipe.pending, (state) => {
+                state.loadingEdit = true;
+            })
+            .addCase(editRecipe.fulfilled, (state, action) => {
+                try {
+                    state.loadingEdit = false;
+
+                    const index = state.recipes.findIndex(
+                        (recipe) => recipe._id === action.payload._id
+                    );
+
+                    if (index !== -1) {
+                        state.recipes[index] = action.payload;
+                    }
+
+                    if (state.selectedRecipe?._id === action.payload._id) {
+                        state.selectedRecipe = action.payload;
+                    }
+                } catch (err) {
+                    console.error("editRecipe.fulfilled reducer error:", err);
+                }
+            })
+            .addCase(editRecipe.rejected, (state, action) => {
+                state.loadingEdit = false;
+                state.error = action.payload;
+            });
+    },
 });
 
-export const { setView, clearView } = usersSlice.actions;
-export default usersSlice.reducer;
+export const { clearRecipe, clearIdToEdit, setIdToEdit, setCat } = menuSlice.actions;
+export default menuSlice.reducer;
