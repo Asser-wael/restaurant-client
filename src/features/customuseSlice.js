@@ -32,10 +32,14 @@ export const addNewCategory = createAsyncThunk(
         try {
             const res = await api.post("/addNewCategory", formdata);
 
-            dispatch(setNotification({
-                message: res.data.message,
-                type: res.data.type,
-            }));
+            try {
+                dispatch(setNotification({
+                    message: res.data.message,
+                    type: res.data.type,
+                }));
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return res.data.data;
         } catch (err) {
@@ -50,10 +54,14 @@ export const deleteCategory = createAsyncThunk(
         try {
             const res = await api.delete(`/deleteCategory/${id}`);
 
-            dispatch(setNotification({
-                message: res.data.message,
-                type: res.data.type,
-            }));
+            try {
+                dispatch(setNotification({
+                    message: res.data.message,
+                    type: res.data.type,
+                }));
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return id;
         } catch (err) {
@@ -80,10 +88,14 @@ export const addPopular = createAsyncThunk(
         try {
             const res = await api.post("/addPopular", { id });
 
-            dispatch(setNotification({
-                message: res.data.message,
-                type: res.data.type,
-            }));
+            try {
+                dispatch(setNotification({
+                    message: res.data.message,
+                    type: res.data.type,
+                }));
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return res.data.popularDish;
         } catch (err) {
@@ -98,10 +110,14 @@ export const deletePopular = createAsyncThunk(
         try {
             const res = await api.delete(`/deletePopular/${id}`);
 
-            dispatch(setNotification({
-                message: res.data.message,
-                type: res.data.type,
-            }));
+            try {
+                dispatch(setNotification({
+                    message: res.data.message,
+                    type: res.data.type,
+                }));
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
 
             return id;
         } catch (err) {
@@ -127,8 +143,6 @@ const customuseSlice = createSlice({
         loadingDeletePopular: false,
     },
 
-
-    
     extraReducers: (builder) => {
         builder
 
@@ -136,8 +150,12 @@ const customuseSlice = createSlice({
                 state.loadingCategories = true;
             })
             .addCase(getAllCategories.fulfilled, (state, action) => {
-                state.loadingCategories = false;
-                state.categories = action.payload;
+                try {
+                    state.loadingCategories = false;
+                    state.categories = action.payload;
+                } catch (err) {
+                    console.error("getAllCategories.fulfilled reducer error:", err);
+                }
             })
             .addCase(getAllCategories.rejected, (state) => {
                 state.loadingCategories = false;
@@ -146,9 +164,12 @@ const customuseSlice = createSlice({
                 state.loadingoffers = true;
             })
             .addCase(getOffers.fulfilled, (state, action) => {
-                state.loadingoffers = false;
-                state.offers = action.payload;
-
+                try {
+                    state.loadingoffers = false;
+                    state.offers = action.payload;
+                } catch (err) {
+                    console.error("getOffers.fulfilled reducer error:", err);
+                }
             })
             .addCase(getOffers.rejected, (state) => {
                 state.loadingoffers = false;
@@ -158,8 +179,12 @@ const customuseSlice = createSlice({
                 state.loadingCreateCategory = true;
             })
             .addCase(addNewCategory.fulfilled, (state, action) => {
-                state.loadingCreateCategory = false;
-                state.categories.push(action.payload);
+                try {
+                    state.loadingCreateCategory = false;
+                    state.categories.push(action.payload);
+                } catch (err) {
+                    console.error("addNewCategory.fulfilled reducer error:", err);
+                }
             })
             .addCase(addNewCategory.rejected, (state) => {
                 state.loadingCreateCategory = false;
@@ -169,10 +194,14 @@ const customuseSlice = createSlice({
                 state.loadingDeleteCategory = true;
             })
             .addCase(deleteCategory.fulfilled, (state, action) => {
-                state.loadingDeleteCategory = false;
-                state.categories = state.categories.filter(
-                    (c) => c._id !== action.payload
-                );
+                try {
+                    state.loadingDeleteCategory = false;
+                    state.categories = state.categories.filter(
+                        (c) => c._id !== action.payload
+                    );
+                } catch (err) {
+                    console.error("deleteCategory.fulfilled reducer error:", err);
+                }
             })
             .addCase(deleteCategory.rejected, (state) => {
                 state.loadingDeleteCategory = false;
@@ -182,8 +211,12 @@ const customuseSlice = createSlice({
                 state.loadingPopular = true;
             })
             .addCase(getPopularDishes.fulfilled, (state, action) => {
-                state.loadingPopular = false;
-                state.PopularDishes = action.payload;
+                try {
+                    state.loadingPopular = false;
+                    state.PopularDishes = action.payload;
+                } catch (err) {
+                    console.error("getPopularDishes.fulfilled reducer error:", err);
+                }
             })
             .addCase(getPopularDishes.rejected, (state) => {
                 state.loadingPopular = false;
@@ -193,8 +226,12 @@ const customuseSlice = createSlice({
                 state.loadingAddPopular = true;
             })
             .addCase(addPopular.fulfilled, (state, action) => {
-                state.loadingAddPopular = false;
-                state.PopularDishes.push(action.payload);
+                try {
+                    state.loadingAddPopular = false;
+                    state.PopularDishes.push(action.payload);
+                } catch (err) {
+                    console.error("addPopular.fulfilled reducer error:", err);
+                }
             })
             .addCase(addPopular.rejected, (state) => {
                 state.loadingAddPopular = false;
@@ -204,10 +241,14 @@ const customuseSlice = createSlice({
                 state.loadingDeletePopular = true;
             })
             .addCase(deletePopular.fulfilled, (state, action) => {
-                state.loadingDeletePopular = false;
-                state.PopularDishes = state.PopularDishes.filter(
-                    (p) => p._id !== action.payload
-                );
+                try {
+                    state.loadingDeletePopular = false;
+                    state.PopularDishes = state.PopularDishes.filter(
+                        (p) => p._id !== action.payload
+                    );
+                } catch (err) {
+                    console.error("deletePopular.fulfilled reducer error:", err);
+                }
             })
             .addCase(deletePopular.rejected, (state) => {
                 state.loadingDeletePopular = false;

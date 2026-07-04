@@ -5,18 +5,24 @@ import axios from "axios";
 import { setNotification } from "./notificationSlice"
 // api url 
 const API_URL = import.meta.env.VITE_API_URL;
+
 // Register
 export const registerUser = createAsyncThunk(
     "auth/register", async (formData, { rejectWithValue, dispatch }) => {
         try {
             const res = await axios.post(`${API_URL}/register`, formData)
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
             return res.data
 
         } catch (error) {
@@ -26,6 +32,7 @@ export const registerUser = createAsyncThunk(
             });
         }
     })
+
 export const loginUser = createAsyncThunk(
     "auth/login", async (formData, { rejectWithValue, dispatch }) => {
         try {
@@ -34,15 +41,29 @@ export const loginUser = createAsyncThunk(
                 withCredentials: true
             });
 
-            localStorage.setItem("accessToken", res.data.accessToken);
-            const accessToken = localStorage.getItem("accessToken");
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
-            await dispatch(getUser())
+            try {
+                localStorage.setItem("accessToken", res.data.accessToken);
+            } catch (err) {
+                console.error("Failed to save accessToken to localStorage:", err);
+            }
+
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            try {
+                await dispatch(getUser())
+            } catch (err) {
+                console.error("getUser dispatch error:", err);
+            }
+
             return res.data
         }
         catch (error) {
@@ -56,11 +77,16 @@ export const loginUser = createAsyncThunk(
 export const getUser = createAsyncThunk(
     "auth/getUser", async (_, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem("accessToken");
+            let token = null;
+            try {
+                token = localStorage.getItem("accessToken");
+            } catch (err) {
+                console.error("Failed to read accessToken from localStorage:", err);
+            }
 
             // if (token) {
 
-                const res = await api.get(`/user`)
+            const res = await api.get(`/user`)
             // }
             return res.data
         }
@@ -78,17 +104,30 @@ export const logoutUser = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             // امسح الـ subscription من الـ backend قبل الـ logout
-            const reg = await navigator.serviceWorker.getRegistration();
-            if (reg) {
-                const sub = await reg.pushManager.getSubscription();
-                if (sub) {
-                    await fetch(`${API_URL}/delete-admin-subscription`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ endpoint: sub.endpoint }),
-                    });
-                    await sub.unsubscribe();
+            try {
+                const reg = await navigator.serviceWorker.getRegistration();
+                if (reg) {
+                    const sub = await reg.pushManager.getSubscription();
+                    if (sub) {
+                        try {
+                            await fetch(`${API_URL}/delete-admin-subscription`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ endpoint: sub.endpoint }),
+                            });
+                        } catch (err) {
+                            console.error("Failed to delete admin subscription on server:", err);
+                        }
+
+                        try {
+                            await sub.unsubscribe();
+                        } catch (err) {
+                            console.error("Failed to unsubscribe:", err);
+                        }
+                    }
                 }
+            } catch (err) {
+                console.error("Failed to clean up push subscription on logout:", err);
             }
 
             await axios.post(
@@ -97,7 +136,12 @@ export const logoutUser = createAsyncThunk(
                 { withCredentials: true }
             );
 
-            localStorage.removeItem("accessToken");
+            try {
+                localStorage.removeItem("accessToken");
+            } catch (err) {
+                console.error("Failed to remove accessToken from localStorage:", err);
+            }
+
             return true;
         } catch (err) {
             return rejectWithValue(err.response?.data);
@@ -156,8 +200,12 @@ const authSlice = createSlice({
             })
 
             .addCase(getUser.fulfilled, (state, action) => {
-                state.loadingUser = false;
-                state.userData = action.payload;
+                try {
+                    state.loadingUser = false;
+                    state.userData = action.payload;
+                } catch (err) {
+                    console.error("getUser.fulfilled reducer error:", err);
+                }
             })
 
             .addCase(getUser.rejected, (state, action) => {
