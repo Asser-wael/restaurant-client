@@ -200,21 +200,22 @@ export default function App() {
     };
   }, [dispatch]);
 
-  if (user && user.status === false) {
-    return <WaitingAdmin />;
-  }
-  useEffect(() => {
-    Notification.requestPermission();
-  }, []);
-  return (
-    <>
-      <Toast />
-      <SoundPlayer />
-      <Popup />
+ useEffect(() => {
+  Notification.requestPermission();
+}, []);
 
-      <Suspense fallback={<Loading />}>
-        <RouterProvider router={AppRoutes} />
-      </Suspense>
-    </>
-  );
+if (user && user.status === false) {
+  return <WaitingAdmin />;
 }
+
+return (
+  <>
+    <Toast />
+    <SoundPlayer />
+    <Popup />
+
+    <Suspense fallback={<Loading />}>
+      <RouterProvider router={AppRoutes} />
+    </Suspense>
+  </>
+);}
