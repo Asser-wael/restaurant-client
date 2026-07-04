@@ -1,7 +1,32 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/api";
 import { setNotification } from "./notificationSlice";
-import { clearView } from "./usersSlice";
+import { clearView, setView } from "./usersSlice";
+
+// ✅ هيلبر موحّد لإرسال الإشعار بأمان (بدل تكرار نفس try/catch في كل thunk)
+const notify = (dispatch, res) => {
+    try {
+        dispatch(
+            setNotification({
+                message: res.data.message,
+                type: res.data.type,
+            })
+        );
+    } catch (err) {
+        console.error("setNotification dispatch error:", err);
+    }
+};
+
+// ✅ هيلبر لقراءة الـ view المتخزن في localStorage بأمان
+const getStoredView = () => {
+    try {
+        const storedView = localStorage.getItem("view");
+        return storedView ? JSON.parse(storedView) : null;
+    } catch (err) {
+        console.error("Failed to read/parse stored view:", err);
+        return null;
+    }
+};
 
 //  GET 
 export const getAllRecipes = createAsyncThunk(
@@ -9,18 +34,7 @@ export const getAllRecipes = createAsyncThunk(
     async (_, { rejectWithValue, dispatch }) => {
         try {
             const res = await api.get("/getAllRecipes");
-
-            try {
-                dispatch(
-                    setNotification({
-                        message: res.data.message,
-                        type: res.data.type,
-                    })
-                );
-            } catch (err) {
-                console.error("setNotification dispatch error:", err);
-            }
-
+            notify(dispatch, res);
             return res.data.data;
         } catch (err) {
             return rejectWithValue(err.response?.data);
@@ -34,18 +48,7 @@ export const addRecipe = createAsyncThunk(
     async (formData, { rejectWithValue, dispatch }) => {
         try {
             const res = await api.post("/addRecipe", formData);
-
-            try {
-                dispatch(
-                    setNotification({
-                        message: res.data.message,
-                        type: res.data.type,
-                    })
-                );
-            } catch (err) {
-                console.error("setNotification dispatch error:", err);
-            }
-
+            notify(dispatch, res);
             return res.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -59,27 +62,14 @@ export const removeRecipe = createAsyncThunk(
     async (id, { rejectWithValue, dispatch }) => {
         try {
             const res = await api.delete(`/removeRecipe/${id}`);
-
-            try {
-                dispatch(
-                    setNotification({
-                        message: res.data.message,
-                        type: res.data.type,
-                    })
-                );
-            } catch (err) {
-                console.error("setNotification dispatch error:", err);
-            }
+            notify(dispatch, res);
 
             // ✅ لو المنتج اللي اتمسح ده هو نفسه المتخزن في الـ view (localStorage)
             // امسح الـ view عشان مايفضلش يشاور على منتج مش موجود
             try {
-                const storedView = localStorage.getItem("view");
-                if (storedView) {
-                    const parsedView = JSON.parse(storedView);
-                    if (parsedView?._id === id) {
-                        dispatch(clearView());
-                    }
+                const parsedView = getStoredView();
+                if (parsedView?._id === id) {
+                    dispatch(clearView());
                 }
             } catch (err) {
                 console.error("Failed to check/clear stale view after delete:", err);
@@ -112,18 +102,18 @@ export const editRecipe = createAsyncThunk(
     "menu/editRecipe",
     async ({ formData, id }, { rejectWithValue, dispatch }) => {
         try {
-
             const res = await api.put(`/editRecipe/${id}`, formData);
+            notify(dispatch, res);
 
+            // ✅ لو المنتج اللي اتعدّل ده هو نفسه المعروض في الـ view
+            // حدّث الـ view بالبيانات الجديدة بدل ما يفضل يعرض بيانات قديمة
             try {
-                dispatch(
-                    setNotification({
-                        message: res.data.message,
-                        type: res.data.type,
-                    })
-                );
+                const parsedView = getStoredView();
+                if (parsedView?._id === id) {
+                    dispatch(setView(res.data.data));
+                }
             } catch (err) {
-                console.error("setNotification dispatch error:", err);
+                console.error("Failed to sync view after edit:", err);
             }
 
             return res.data.data;
@@ -153,14 +143,14 @@ const menuSlice = createSlice({
     },
 
     reducers: {
-        clearRecipe: (state, action) => {
+        clearRecipe: (state) => {
             try {
                 state.selectedRecipe = null;
             } catch (err) {
                 console.error("clearRecipe reducer error:", err);
             }
         },
-        clearIdToEdit: (state, action) => {
+        clearIdToEdit: (state) => {
             try {
                 state.selectedRecipeToEdit = null;
             } catch (err) {
@@ -248,7 +238,6 @@ const menuSlice = createSlice({
                 try {
                     state.loadingView = false;
                     state.selectedRecipe = action.payload;
-                    console.log(state.selectedRecipe);
                 } catch (err) {
                     console.error("viewRecipe.fulfilled reducer error:", err);
                 }
