@@ -31,24 +31,47 @@ export const checkOut = createAsyncThunk(
     "order/checkOut",
     async (formData, { rejectWithValue, dispatch }) => {
         try {
-            const cart = localStorage.getItem("cart");
-            const cartP = cart ? JSON.parse(cart) : [];
+            let cart = null;
+            let cartP = [];
+            try {
+                cart = localStorage.getItem("cart");
+                cartP = cart ? JSON.parse(cart) : [];
+            } catch (err) {
+                console.error("Failed to read/parse cart from localStorage:", err);
+                cart = null;
+                cartP = [];
+            }
 
             if (!cart || cart.length === 0) {
-                dispatch(
-                    setNotification({
-                        message: "The cart is empty",
-                        type: "error",
-                    })
-                );
+                try {
+                    dispatch(
+                        setNotification({
+                            message: "The cart is empty",
+                            type: "error",
+                        })
+                    );
+                } catch (err) {
+                    console.error("setNotification dispatch error:", err);
+                }
                 return rejectWithValue("Cart is empty");
             }
-            formData.append("cart", cart);
+
+            try {
+                formData.append("cart", cart);
+            } catch (err) {
+                console.error("Failed to append cart to formData:", err);
+                return rejectWithValue("Failed to prepare checkout data");
+            }
 
             const res = await api.post("/checkOut", formData);
 
-            const oldOrders =
-                JSON.parse(localStorage.getItem("orderTracking")) || [];
+            let oldOrders = [];
+            try {
+                oldOrders = JSON.parse(localStorage.getItem("orderTracking")) || [];
+            } catch (err) {
+                console.error("Failed to parse orderTracking from localStorage:", err);
+                oldOrders = [];
+            }
 
             const newOrder = {
                 orderId: res.data.order._id,
@@ -59,18 +82,31 @@ export const checkOut = createAsyncThunk(
 
             oldOrders.push(newOrder);
 
-            localStorage.setItem(
-                "orderTracking",
-                JSON.stringify(oldOrders)
-            );
+            try {
+                localStorage.setItem(
+                    "orderTracking",
+                    JSON.stringify(oldOrders)
+                );
+            } catch (err) {
+                console.error("Failed to save orderTracking to localStorage:", err);
+            }
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
-            dispatch(clearCart());
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            try {
+                dispatch(clearCart());
+            } catch (err) {
+                console.error("clearCart dispatch error:", err);
+            }
 
             return { order: res.data.order, newOrder };
         } catch (error) {
@@ -85,13 +121,23 @@ export const updateOrderStatus = createAsyncThunk(
         try {
             const res = await api.put("/updateOrderStatus", { id, status });
 
-            dispatch(
-                setNotification({
-                    message: res.data.message,
-                    type: res.data.type,
-                })
-            );
-            dispatch(clearCart());
+            try {
+                dispatch(
+                    setNotification({
+                        message: res.data.message,
+                        type: res.data.type,
+                    })
+                );
+            } catch (err) {
+                console.error("setNotification dispatch error:", err);
+            }
+
+            try {
+                dispatch(clearCart());
+            } catch (err) {
+                console.error("clearCart dispatch error:", err);
+            }
+
             return res.data.order;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -99,13 +145,21 @@ export const updateOrderStatus = createAsyncThunk(
     }
 );
 
+const getInitialOrderTracking = () => {
+    try {
+        return JSON.parse(localStorage.getItem("orderTracking")) || [];
+    } catch (err) {
+        console.error("Failed to parse initial orderTracking:", err);
+        return [];
+    }
+};
 
 const orderSlice = createSlice({
     name: "orderSlice",
 
     initialState: {
         orders: [],
-        OrderTracking: JSON.parse(localStorage.getItem("orderTracking")) || [],
+        OrderTracking: getInitialOrderTracking(),
         order: null,
         loading: false,
         error: null,
@@ -113,29 +167,41 @@ const orderSlice = createSlice({
 
     reducers: {
         updateTracking(state, action) {
-            const { orderId, status } = action.payload;
+            try {
+                const { orderId, status } = action.payload;
 
-            state.OrderTracking = state.OrderTracking.map((order) =>
-                order.orderId === orderId
-                    ? { ...order, status }
-                    : order
-            );
+                state.OrderTracking = state.OrderTracking.map((order) =>
+                    order.orderId === orderId
+                        ? { ...order, status }
+                        : order
+                );
 
-            localStorage.setItem(
-                "orderTracking",
-                JSON.stringify(state.OrderTracking)
-            );
+                try {
+                    localStorage.setItem(
+                        "orderTracking",
+                        JSON.stringify(state.OrderTracking)
+                    );
+                } catch (err) {
+                    console.error("Failed to save orderTracking to localStorage:", err);
+                }
+            } catch (err) {
+                console.error("updateTracking reducer error:", err);
+            }
         },
     },
 
     extraReducers: (builder) => {
         builder
             .addCase(checkOut.fulfilled, (state, action) => {
-                state.loading = false;
-                state.OrderTracking = [
-                    ...state.OrderTracking,
-                    action.payload.newOrder,
-                ];
+                try {
+                    state.loading = false;
+                    state.OrderTracking = [
+                        ...state.OrderTracking,
+                        action.payload.newOrder,
+                    ];
+                } catch (err) {
+                    console.error("checkOut.fulfilled reducer error:", err);
+                }
             })
             .addCase(checkOut.pending, (state) => {
                 state.loading = true;

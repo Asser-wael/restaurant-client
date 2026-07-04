@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/api";
-import { setNotification } from "./notificationSlice"
+import { setNotification } from "./notificationSlice";
 
 export const getAllUsers = createAsyncThunk(
   "users/getAllUsers",
@@ -9,12 +9,17 @@ export const getAllUsers = createAsyncThunk(
       const res = await api.get("/admin/users");
       console.log(res.data);
 
-      dispatch(
-        setNotification({
-          message: res.data.message,
-          type: res.data.type,
-        })
-      );
+      try {
+        dispatch(
+          setNotification({
+            message: res.data.message,
+            type: res.data.type,
+          })
+        );
+      } catch (err) {
+        console.error("setNotification dispatch error:", err);
+      }
+
       return res.data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data);
@@ -42,12 +47,16 @@ export const changeStatus = createAsyncThunk(
         status,
       });
 
-      dispatch(
-        setNotification({
-          message: res.data.message,
-          type: res.data.type,
-        })
-      );
+      try {
+        dispatch(
+          setNotification({
+            message: res.data.message,
+            type: res.data.type,
+          })
+        );
+      } catch (err) {
+        console.error("setNotification dispatch error:", err);
+      }
 
       return {
         id: res.data.id,
@@ -59,38 +68,90 @@ export const changeStatus = createAsyncThunk(
   }
 );
 
+const isViewValid = (view) => {
+  if (!view) return false;
+  if (view.image === undefined || view.image === "undefined") return false;
+  if (view.title === undefined || view.title === "undefined") return false;
+  return true;
+};
+
+const getInitialView = () => {
+  try {
+    const stored = localStorage.getItem("view");
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+
+    if (!isViewValid(parsed)) {
+      try {
+        localStorage.removeItem("view");
+      } catch (err) {
+        console.error("Failed to remove invalid view from localStorage:", err);
+      }
+      return null;
+    }
+
+    return parsed;
+  } catch (err) {
+    console.error("Failed to parse initial view:", err);
+    return null;
+  }
+};
+
 const usersSlice = createSlice({
   name: "usersSlice",
   initialState: {
     usersData: [],
-      view: localStorage.getItem("view")
-    ? JSON.parse(localStorage.getItem("view"))
-    : null,
+    view: getInitialView(),
     loadingUsers: false,
     loadingDelete: false,
     loadingStatus: false,
     error: null,
   },
 
+  reducers: {
+    setView: (state, action) => {
+      try {
+        const payload = action.payload;
 
-reducers: {
-  setView: (state, action) => {
-    state.view = action.payload;
+        if (!isViewValid(payload)) {
+          console.warn("Invalid view (missing image or title), clearing view instead:", payload);
+          state.view = null;
+          try {
+            localStorage.removeItem("view");
+          } catch (err) {
+            console.error("Failed to remove view from localStorage:", err);
+          }
+          return;
+        }
 
-    localStorage.setItem(
-      "view",
-      JSON.stringify(action.payload)
-    );
+        state.view = payload;
+
+        try {
+          localStorage.setItem(
+            "view",
+            JSON.stringify(payload)
+          );
+        } catch (err) {
+          console.error("Failed to save view to localStorage:", err);
+        }
+      } catch (err) {
+        console.error("setView reducer error:", err);
+      }
+    },
+
+    clearView: (state) => {
+      try {
+        state.view = null;
+        localStorage.removeItem("view");
+      } catch (err) {
+        console.error("clearView reducer error:", err);
+      }
+    },
   },
 
-  clearView: (state) => {
-    state.view = null;
-    localStorage.removeItem("view");
-  },
-},
   extraReducers: (builder) => {
     builder
-
       // GET USERS
       .addCase(getAllUsers.pending, (state) => {
         state.loadingUsers = true;
@@ -108,14 +169,18 @@ reducers: {
         state.loadingStatus = true;
       })
       .addCase(changeStatus.fulfilled, (state, action) => {
-        state.loadingStatus = false;
+        try {
+          state.loadingStatus = false;
 
-        const user = state.usersData.find(
-          (u) => u._id === action.payload.id
-        );
+          const user = state.usersData.find(
+            (u) => u._id === action.payload.id
+          );
 
-        if (user) {
-          user.status = action.payload.status;
+          if (user) {
+            user.status = action.payload.status;
+          }
+        } catch (err) {
+          console.error("changeStatus.fulfilled reducer error:", err);
         }
       })
       // DELETE
@@ -123,10 +188,14 @@ reducers: {
         state.loadingDelete = true;
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.loadingDelete = false;
-        state.usersData = state.usersData.filter(
-          (user) => user._id !== action.payload
-        );
+        try {
+          state.loadingDelete = false;
+          state.usersData = state.usersData.filter(
+            (user) => user._id !== action.payload
+          );
+        } catch (err) {
+          console.error("deleteUser.fulfilled reducer error:", err);
+        }
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.loadingDelete = false;
@@ -134,5 +203,6 @@ reducers: {
       });
   },
 });
+
 export const { setView, clearView } = usersSlice.actions;
 export default usersSlice.reducer;
