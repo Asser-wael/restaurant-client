@@ -68,15 +68,12 @@ export const changeStatus = createAsyncThunk(
   }
 );
 
-// ✅ فحص هل الـ view صالح (لازم يكون فيه _id على الأقل عشان نقدر نطابقه مع المنتجات)
 const isViewValid = (view) => {
   if (!view) return false;
   if (!view._id) return false;
   return true;
 };
 
-// ✅ قراءة الـ view الابتدائي من localStorage بأمان
-// لو الكائن مش صالح (فاضي أو من غير _id)، بنلغيه (نرجّعه null ونمسحه من localStorage)
 const getInitialView = () => {
   try {
     const stored = localStorage.getItem("view");
@@ -116,7 +113,6 @@ const usersSlice = createSlice({
       try {
         const payload = action.payload;
 
-        // ✅ لو الفيو من غير _id (بيانات ناقصة)، الغِ الفيو بدل ما تحفظه
         if (!isViewValid(payload)) {
           console.warn("Invalid view (missing _id), clearing view instead:", payload);
           state.view = null;

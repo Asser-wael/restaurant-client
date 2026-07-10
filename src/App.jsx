@@ -21,7 +21,6 @@ import { setNotification } from "./features/notificationSlice";
 import { getAdminOrders, updateTracking } from "./features/orderSlice";
 import { show } from "./features/soundNotificationSlice";
 
-// ✅ تشغيل صوت التنبيه - محاط بـ try/catch عشان لو الأوديو فشل ميكسرش 
 const playStatusSound = () => {
   try {
     new Audio(status).play().catch((err) => {
@@ -96,6 +95,20 @@ const setupPushNotification = async (endpoint, body) => {
   }
 };
 
+const registerCustomerPush = () => {
+  try {
+    const tableNumber = localStorage.getItem("tableNumber");
+    if (!tableNumber) return;
+
+    setupPushNotification(
+      "/save-customer-subscription",
+      (subscription) => ({ tableNumber, subscription })
+    ).catch((err) => console.error("Customer push setup failed:", err));
+  } catch (err) {
+    console.error("Customer push effect error:", err);
+  }
+};
+
 export default function App() {
   const dispatch = useDispatch();
   const { userData: user } = useSelector((state) => state.authSlice);
@@ -122,19 +135,15 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    try {
-      if (user?.role === "admin") return;
+    if (user?.role === "admin") return;
 
-      const tableNumber = localStorage.getItem("tableNumber");
-      if (!tableNumber) return;
+    registerCustomerPush();
 
-      setupPushNotification(
-        "/save-customer-subscription",
-        (subscription) => ({ tableNumber, subscription })
-      ).catch((err) => console.error("Customer push setup failed:", err));
-    } catch (err) {
-      console.error("Customer push effect error:", err);
-    }
+    window.addEventListener("tableNumberSet", registerCustomerPush);
+
+    return () => {
+      window.removeEventListener("tableNumberSet", registerCustomerPush);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -149,7 +158,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // App.jsx — handleOrderStatus
     const handleOrderStatus = async (data) => {
       try {
         console.log("order-status-updated", data);
@@ -316,7 +324,6 @@ export default function App() {
     }
   }, [dispatch]);
 
-  // ✅ طلب إذن الإشعارات عند تحميل التطبيق
   useEffect(() => {
     try {
       Notification.requestPermission();
@@ -325,7 +332,6 @@ export default function App() {
     }
   }, []);
 
-  // ✅ لو الأدمن لسه مش متفعّل (status === false)، اعرض صفحة الانتظار
   if (user && user.status === false) {
     return <WaitingAdmin />;
   }

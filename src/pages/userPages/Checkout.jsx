@@ -35,9 +35,12 @@ export default function Checkout() {
     }
 
     dispatch(checkOut(formData));
-    
+
     localStorage.setItem("tableNumber", data.tableNumber);
     socket.emit("join-table", data.tableNumber);
+
+    window.dispatchEvent(new Event("tableNumberSet"));
+
     navigate("/")
 
 
@@ -156,9 +159,9 @@ export default function Checkout() {
 
 
 
-          {errors.transferImage && (
+          {errors.image && (
             <p className="text-red-500">
-              {errors.transferImage.message}
+              {errors.image.message}
             </p>
           )}
 
