@@ -75,7 +75,7 @@ export default function Footer() {
           {/* PHONE */}
           <div className="flex items-center gap-2 text-zinc-300">
             <FaPhone className="text-blue-400" />
-            <span>01129691951</span> (dev)
+            <span>01129691951.</span> (dev)
           </div>
 
         </div>
